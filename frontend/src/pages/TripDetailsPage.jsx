@@ -21,6 +21,8 @@ export default function TripDetailsPage() {
   const [error, setError] = useState("");
   // null = form hidden, {} = adding a new activity, otherwise the activity being edited
   const [formActivity, setFormActivity] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     Promise.all([getTrip(id), getActivities(id)])
@@ -57,12 +59,15 @@ export default function TripDetailsPage() {
   }
 
   async function handleDeleteTrip() {
-    if (!window.confirm(`Delete "${trip.name}" and all its activities?`)) return;
+    setError("");
+    setDeleting(true);
     try {
       await deleteTrip(id);
       navigate("/");
     } catch (err) {
       setError(err.message);
+      setDeleting(false);
+      setShowDeleteConfirm(false);
     }
   }
 
@@ -97,8 +102,8 @@ export default function TripDetailsPage() {
             Edit trip
           </Link>
           <button
-            onClick={handleDeleteTrip}
-            className="rounded border border-red-300 px-4 py-2 text-sm text-red-700"
+            onClick={() => setShowDeleteConfirm(true)}
+            className="rounded border border-red-300 px-4 py-2 text-sm text-red-700 hover:bg-red-50"
           >
             Delete trip
           </button>
@@ -157,6 +162,42 @@ export default function TripDetailsPage() {
       )}
 
       <Itinerary activities={activities} onEdit={setFormActivity} onDelete={handleDeleteActivity} />
+
+      {showDeleteConfirm && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-dialog-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        >
+          <div className="w-full max-w-md rounded-lg border border-gray-200 bg-white p-6 shadow-xl">
+            <h3 id="delete-dialog-title" className="text-lg font-semibold text-gray-900">
+              Delete Trip
+            </h3>
+            <p className="mt-2 text-sm text-gray-600">
+              Are you sure you want to delete this trip? All activities associated with this trip will also be deleted.
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+                className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteTrip}
+                disabled={deleting}
+                className="rounded bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
