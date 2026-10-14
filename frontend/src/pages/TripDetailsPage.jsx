@@ -21,6 +21,7 @@ export default function TripDetailsPage() {
   const [error, setError] = useState("");
   // null = form hidden, {} = adding a new activity, otherwise the activity being edited
   const [formActivity, setFormActivity] = useState(null);
+  const [deletingActivityId, setDeletingActivityId] = useState(null);
 
   useEffect(() => {
     Promise.all([getTrip(id), getActivities(id)])
@@ -48,11 +49,14 @@ export default function TripDetailsPage() {
   async function handleDeleteActivity(activity) {
     if (!window.confirm(`Delete "${activity.title}"?`)) return;
     setError("");
+    setDeletingActivityId(activity.id);
     try {
       await deleteActivity(activity.id);
       await reloadActivities();
     } catch (err) {
       setError(err.message);
+    } finally {
+      setDeletingActivityId(null);
     }
   }
 
@@ -156,7 +160,12 @@ export default function TripDetailsPage() {
         </div>
       )}
 
-      <Itinerary activities={activities} onEdit={setFormActivity} onDelete={handleDeleteActivity} />
+      <Itinerary
+        activities={activities}
+        onEdit={setFormActivity}
+        onDelete={handleDeleteActivity}
+        deletingActivityId={deletingActivityId}
+      />
     </div>
   );
 }

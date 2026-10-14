@@ -71,9 +71,14 @@ export default function ActivityForm({ initialActivity = emptyActivity, minDate,
           disabled={saving}
           className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
         >
-          {submitLabel}
+          {saving ? (initialActivity.id ? "Saving..." : "Adding...") : submitLabel}
         </button>
-        <button type="button" onClick={onCancel} className="rounded border border-gray-300 px-4 py-2 text-sm">
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={saving}
+          className="rounded border border-gray-300 px-4 py-2 text-sm disabled:opacity-50"
+        >
           Cancel
         </button>
       </div>
