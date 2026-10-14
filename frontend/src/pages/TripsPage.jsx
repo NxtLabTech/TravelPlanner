@@ -8,6 +8,7 @@ export default function TripsPage() {
   const [trips, setTrips] = useState([]);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
+  const [sortBy, setSortBy] = useState("start_date_asc");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -30,6 +31,22 @@ export default function TripsPage() {
       ignore = true;
     };
   }, [search, status]);
+
+  const sortedTrips = [...trips].sort((a, b) => {
+    if (sortBy === "start_date_asc") {
+      return (a.start_date || "").localeCompare(b.start_date || "");
+    }
+    if (sortBy === "start_date_desc") {
+      return (b.start_date || "").localeCompare(a.start_date || "");
+    }
+    if (sortBy === "name_asc") {
+      return (a.name || "").localeCompare(b.name || "");
+    }
+    if (sortBy === "name_desc") {
+      return (b.name || "").localeCompare(a.name || "");
+    }
+    return 0;
+  });
 
   return (
     <div>
@@ -60,15 +77,26 @@ export default function TripsPage() {
           <option value="ongoing">Ongoing</option>
           <option value="completed">Completed</option>
         </select>
+        <select
+          aria-label="Sort trips"
+          value={sortBy}
+          onChange={(event) => setSortBy(event.target.value)}
+          className="rounded border border-gray-300 bg-white px-3 py-2"
+        >
+          <option value="start_date_asc">Start date: Earliest first</option>
+          <option value="start_date_desc">Start date: Latest first</option>
+          <option value="name_asc">Name: A–Z</option>
+          <option value="name_desc">Name: Z–A</option>
+        </select>
       </div>
 
       {error && <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
       {loading && <p className="text-sm text-gray-500">Loading...</p>}
       {!loading && !error && trips.length === 0 && <p className="text-gray-500">No trips found.</p>}
 
-      {trips.length > 0 && (
+      {sortedTrips.length > 0 && (
         <ul className="divide-y divide-gray-200 rounded border border-gray-200 bg-white">
-          {trips.map((trip) => (
+          {sortedTrips.map((trip) => (
             <li key={trip.id}>
               <Link
                 to={`/trips/${trip.id}`}

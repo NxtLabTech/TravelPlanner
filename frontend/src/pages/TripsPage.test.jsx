@@ -60,4 +60,61 @@ describe("TripsPage", () => {
 
     await waitFor(() => expect(getTrips).toHaveBeenLastCalledWith({ search: "goa", status: "ongoing" }));
   });
+
+  it("sorts trips by start date and name immediately", async () => {
+    const tripA = {
+      id: 1,
+      name: "Bhopal Expedition",
+      destination: "Bhopal",
+      start_date: "2026-12-01",
+      end_date: "2026-12-05",
+      budget: 15000,
+      status: "upcoming",
+    };
+    const tripB = {
+      id: 2,
+      name: "Agra Tour",
+      destination: "Agra",
+      start_date: "2026-10-01",
+      end_date: "2026-10-05",
+      budget: 10000,
+      status: "completed",
+    };
+    const tripC = {
+      id: 3,
+      name: "Chennai Getaway",
+      destination: "Chennai",
+      start_date: "2026-11-15",
+      end_date: "2026-11-20",
+      budget: 12000,
+      status: "upcoming",
+    };
+
+    getTrips.mockResolvedValue([tripA, tripB, tripC]);
+    renderPage();
+
+    // Default sort: Start date: Earliest first
+    // Expected order: Agra Tour (Oct 1), Chennai Getaway (Nov 15), Bhopal Expedition (Dec 1)
+    expect(await screen.findByText("Bhopal Expedition")).toBeInTheDocument();
+    let tripHeadings = screen.getAllByRole("listitem").map((item) => item.querySelector("p.font-medium")?.textContent);
+    expect(tripHeadings).toEqual(["Agra Tour", "Chennai Getaway", "Bhopal Expedition"]);
+
+    // Sort: Start date: Latest first
+    await userEvent.selectOptions(screen.getByLabelText("Sort trips"), "start_date_desc");
+    tripHeadings = screen.getAllByRole("listitem").map((item) => item.querySelector("p.font-medium")?.textContent);
+    expect(tripHeadings).toEqual(["Bhopal Expedition", "Chennai Getaway", "Agra Tour"]);
+
+    // Sort: Name: A–Z
+    await userEvent.selectOptions(screen.getByLabelText("Sort trips"), "name_asc");
+    tripHeadings = screen.getAllByRole("listitem").map((item) => item.querySelector("p.font-medium")?.textContent);
+    expect(tripHeadings).toEqual(["Agra Tour", "Bhopal Expedition", "Chennai Getaway"]);
+
+    // Sort: Name: Z–A
+    await userEvent.selectOptions(screen.getByLabelText("Sort trips"), "name_desc");
+    tripHeadings = screen.getAllByRole("listitem").map((item) => item.querySelector("p.font-medium")?.textContent);
+    expect(tripHeadings).toEqual(["Chennai Getaway", "Bhopal Expedition", "Agra Tour"]);
+
+    // Verify getTrips was called only once on initial render
+    expect(getTrips).toHaveBeenCalledTimes(1);
+  });
 });
