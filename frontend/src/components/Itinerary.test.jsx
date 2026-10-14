@@ -33,4 +33,40 @@ describe("Itinerary", () => {
     expect(onEdit).toHaveBeenCalledWith(activities[0]);
     expect(onDelete).toHaveBeenCalledWith(activities[1]);
   });
+
+  it("renders activities with very long title and location and keeps Edit/Delete buttons accessible", async () => {
+    const onEdit = vi.fn();
+    const onDelete = vi.fn();
+    const longActivities = [
+      {
+        id: 42,
+        title: "VeryLongUnbrokenActivityTitleThatCouldExceedContainerWidthIfWrappingIsNotProperlyHandled",
+        date: "2026-11-10",
+        time: "15:00",
+        location: "ExtremelyLongLocationNameWithoutSpacesThatTestsMobileResponsivenessAndWrapping",
+        notes: "Some notes about this activity",
+      },
+    ];
+
+    render(<Itinerary activities={longActivities} onEdit={onEdit} onDelete={onDelete} />);
+
+    expect(
+      screen.getByText("VeryLongUnbrokenActivityTitleThatCouldExceedContainerWidthIfWrappingIsNotProperlyHandled")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("ExtremelyLongLocationNameWithoutSpacesThatTestsMobileResponsivenessAndWrapping")
+    ).toBeInTheDocument();
+
+    const editBtn = screen.getByRole("button", { name: "Edit" });
+    const deleteBtn = screen.getByRole("button", { name: "Delete" });
+
+    expect(editBtn).toBeInTheDocument();
+    expect(deleteBtn).toBeInTheDocument();
+
+    await userEvent.click(editBtn);
+    expect(onEdit).toHaveBeenCalledWith(longActivities[0]);
+
+    await userEvent.click(deleteBtn);
+    expect(onDelete).toHaveBeenCalledWith(longActivities[0]);
+  });
 });

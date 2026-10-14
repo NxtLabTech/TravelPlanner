@@ -69,8 +69,8 @@ export default function TripDetailsPage() {
   if (!trip) {
     return error ? (
       <div>
-        <p className="mb-3 rounded bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
-        <Link to="/" className="text-sm text-blue-600 hover:underline">
+        <p className="mb-3 rounded bg-red-50 px-3 py-2 text-sm text-red-700 break-words">{error}</p>
+        <Link to="/" className="inline-flex min-h-11 items-center text-sm text-blue-600 hover:underline">
           Back to trips
         </Link>
       </div>
@@ -81,24 +81,28 @@ export default function TripDetailsPage() {
 
   return (
     <div>
-      <Link to="/" className="text-sm text-blue-600 hover:underline">
+      <Link to="/" className="inline-flex min-h-11 items-center text-sm text-blue-600 hover:underline">
         ← All trips
       </Link>
 
-      {error && <p className="mt-3 rounded bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+      {error && <p className="mt-3 rounded bg-red-50 px-3 py-2 text-sm text-red-700 break-words">{error}</p>}
 
       <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">{trip.name}</h1>
-          <p className="text-gray-600">{trip.destination}</p>
+        <div className="min-w-0 flex-1">
+          <h1 className="text-2xl font-semibold break-words">{trip.name}</h1>
+          <p className="text-gray-600 break-words">{trip.destination}</p>
         </div>
-        <div className="flex gap-3">
-          <Link to={`/trips/${id}/edit`} className="rounded border border-gray-300 px-4 py-2 text-sm">
+        <div className="flex flex-wrap gap-3 sm:shrink-0">
+          <Link
+            to={`/trips/${id}/edit`}
+            className="inline-flex min-h-11 items-center justify-center rounded border border-gray-300 px-4 py-2 text-sm"
+          >
             Edit trip
           </Link>
           <button
+            type="button"
             onClick={handleDeleteTrip}
-            className="rounded border border-red-300 px-4 py-2 text-sm text-red-700"
+            className="inline-flex min-h-11 items-center justify-center rounded border border-red-300 px-4 py-2 text-sm text-red-700"
           >
             Delete trip
           </button>
@@ -106,36 +110,37 @@ export default function TripDetailsPage() {
       </div>
 
       <dl className="mt-4 grid gap-4 rounded border border-gray-200 bg-white p-4 text-sm sm:grid-cols-4">
-        <div>
+        <div className="min-w-0">
           <dt className="text-gray-500">Status</dt>
           <dd className="mt-1">
             <StatusBadge status={trip.status} />
           </dd>
         </div>
-        <div>
+        <div className="min-w-0">
           <dt className="text-gray-500">Dates</dt>
-          <dd className="mt-1">
+          <dd className="mt-1 break-words">
             {formatDate(trip.start_date)} – {formatDate(trip.end_date)}
           </dd>
         </div>
-        <div>
+        <div className="min-w-0">
           <dt className="text-gray-500">Budget</dt>
-          <dd className="mt-1">{formatBudget(trip.budget)}</dd>
+          <dd className="mt-1 break-words">{formatBudget(trip.budget)}</dd>
         </div>
         {trip.description && (
-          <div className="sm:col-span-4">
+          <div className="min-w-0 sm:col-span-4">
             <dt className="text-gray-500">Description</dt>
-            <dd className="mt-1">{trip.description}</dd>
+            <dd className="mt-1 break-words">{trip.description}</dd>
           </div>
         )}
       </dl>
 
-      <div className="mt-8 mb-3 flex items-center justify-between">
+      <div className="mt-8 mb-3 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-semibold">Itinerary</h2>
         {!formActivity && (
           <button
+            type="button"
             onClick={() => setFormActivity({})}
-            className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
+            className="inline-flex min-h-11 items-center justify-center rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
           >
             Add activity
           </button>
