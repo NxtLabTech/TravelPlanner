@@ -22,6 +22,27 @@ describe("Itinerary", () => {
     expect(screen.getByText("Fort visit")).toBeInTheDocument();
   });
 
+  it("filters activities by title or location without changing date groups", async () => {
+    const user = userEvent.setup();
+    render(<Itinerary activities={activities} />);
+
+    await user.type(screen.getByRole("searchbox", { name: "Search activities" }), "bAgA");
+
+    expect(screen.getByText("Beach")).toBeInTheDocument();
+    expect(screen.queryByText("Dinner")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(1);
+  });
+
+  it("shows an empty-search message when no activity matches", async () => {
+    const user = userEvent.setup();
+    render(<Itinerary activities={activities} />);
+
+    await user.type(screen.getByRole("searchbox", { name: "Search activities" }), "museum");
+
+    expect(screen.getByText("No activities found")).toBeInTheDocument();
+    expect(screen.queryByText("Beach")).not.toBeInTheDocument();
+  });
+
   it("calls onEdit and onDelete with the activity", async () => {
     const onEdit = vi.fn();
     const onDelete = vi.fn();
