@@ -12,6 +12,7 @@ import { formatBudget, formatDate } from "../format.js";
 import StatusBadge from "../components/StatusBadge.jsx";
 import ActivityForm from "../components/ActivityForm.jsx";
 import Itinerary from "../components/Itinerary.jsx";
+import { exportItineraryPdf } from "../services/itineraryPdf.js";
 
 export default function TripDetailsPage() {
   const { id } = useParams();
@@ -66,6 +67,10 @@ export default function TripDetailsPage() {
     }
   }
 
+  function handleExportPdf() {
+    exportItineraryPdf(trip, activities);
+  }
+
   if (!trip) {
     return error ? (
       <div>
@@ -92,7 +97,13 @@ export default function TripDetailsPage() {
           <h1 className="text-2xl font-semibold">{trip.name}</h1>
           <p className="text-gray-600">{trip.destination}</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={handleExportPdf}
+            className="rounded border border-gray-300 px-4 py-2 text-sm"
+          >
+            Export PDF
+          </button>
           <Link to={`/trips/${id}/edit`} className="rounded border border-gray-300 px-4 py-2 text-sm">
             Edit trip
           </Link>
