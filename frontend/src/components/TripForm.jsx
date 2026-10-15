@@ -8,6 +8,7 @@ const emptyTrip = {
   end_date: "",
   budget: "",
   description: "",
+  timezone: "UTC",
 };
 
 const inputClass = "mt-1 w-full rounded border border-gray-300 bg-white px-3 py-2";
@@ -87,6 +88,18 @@ export default function TripForm({ initialTrip = emptyTrip, submitLabel, onSubmi
           value={trip.budget}
           onChange={handleChange}
           min="0"
+          className={inputClass}
+        />
+      </label>
+
+      <label className="block text-sm font-medium">
+        Timezone
+        <input
+          name="timezone"
+          value={trip.timezone}
+          onChange={handleChange}
+          placeholder="America/New_York"
+          required
           className={inputClass}
         />
       </label>

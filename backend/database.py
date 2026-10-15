@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS trips (
     end_date TEXT NOT NULL,
     budget NUMERIC NOT NULL DEFAULT 0,
     description TEXT NOT NULL DEFAULT '',
+    timezone TEXT NOT NULL DEFAULT 'UTC',
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -45,4 +46,8 @@ def close_db(error=None):
 def init_db(path):
     db = sqlite3.connect(path)
     db.executescript(SCHEMA)
+    columns = {column[1] for column in db.execute("PRAGMA table_info(trips)")}
+    if "timezone" not in columns:
+        db.execute("ALTER TABLE trips ADD COLUMN timezone TEXT NOT NULL DEFAULT 'UTC'")
+    db.commit()
     db.close()

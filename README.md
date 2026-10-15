@@ -110,7 +110,7 @@ Activities
 
 Errors are returned as JSON, for example `{"error": "End date cannot be before start date"}`, with status 400 (invalid input), 404 (not found) or 500 (server error).
 
-Example trip:
+Example trip (`timezone` is an IANA timezone name and defaults to `UTC` when omitted):
 
 ```json
 {
@@ -119,7 +119,8 @@ Example trip:
   "start_date": "2026-11-10",
   "end_date": "2026-11-14",
   "budget": 20000,
-  "description": "Weekend trip with friends"
+  "description": "Weekend trip with friends",
+  "timezone": "Asia/Kolkata"
 }
 ```
 

@@ -35,6 +35,7 @@ describe("TripForm", () => {
       end_date: "2026-11-14",
       budget: 20000,
       description: "",
+      timezone: "UTC",
     });
   });
 

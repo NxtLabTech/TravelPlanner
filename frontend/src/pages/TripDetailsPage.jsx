@@ -122,6 +122,10 @@ export default function TripDetailsPage() {
           <dt className="text-gray-500">Budget</dt>
           <dd className="mt-1">{formatBudget(trip.budget)}</dd>
         </div>
+        <div>
+          <dt className="text-gray-500">Timezone</dt>
+          <dd className="mt-1">{trip.timezone}</dd>
+        </div>
         {trip.description && (
           <div className="sm:col-span-4">
             <dt className="text-gray-500">Description</dt>

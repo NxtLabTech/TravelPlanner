@@ -1,6 +1,9 @@
 from datetime import date, timedelta
+import sqlite3
 
 import pytest
+
+from app import create_app
 
 
 def trip_data(**changes):
@@ -40,7 +43,48 @@ def test_create_trip(client):
     assert trip["id"] == 1
     assert trip["name"] == "Manali Trip"
     assert trip["budget"] == 15000
+    assert trip["timezone"] == "UTC"
     assert trip["created_at"]
+
+
+def test_create_trip_with_timezone(client):
+    response = client.post("/api/trips", json=trip_data(timezone="America/New_York"))
+    assert response.status_code == 201
+    assert response.get_json()["timezone"] == "America/New_York"
+
+
+@pytest.mark.parametrize("timezone", ["Mars/Olympus", "", 123])
+def test_create_trip_rejects_invalid_timezone(client, timezone):
+    response = client.post("/api/trips", json=trip_data(timezone=timezone))
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "Timezone must be a valid IANA timezone"}
+
+
+def test_existing_trips_receive_the_default_timezone(tmp_path):
+    database_path = tmp_path / "legacy.db"
+    db = sqlite3.connect(database_path)
+    db.execute("""CREATE TABLE trips (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        destination TEXT NOT NULL,
+        start_date TEXT NOT NULL,
+        end_date TEXT NOT NULL,
+        budget NUMERIC NOT NULL DEFAULT 0,
+        description TEXT NOT NULL DEFAULT '',
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )""")
+    db.execute(
+        """INSERT INTO trips (name, destination, start_date, end_date, budget, description)
+           VALUES ('Legacy Trip', 'Goa', '2026-11-10', '2026-11-14', 0, '')"""
+    )
+    db.commit()
+    db.close()
+
+    client = create_app(str(database_path)).test_client()
+    response = client.get("/api/trips/1")
+
+    assert response.status_code == 200
+    assert response.get_json()["timezone"] == "UTC"
 
 
 def test_create_trip_without_budget_defaults_to_zero(client):
