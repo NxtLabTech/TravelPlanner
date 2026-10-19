@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-
+from services.weather import get_weather, WeatherUnavailableError
 from database import get_db
 from models import TRIP_STATUSES, find_trip, trip_to_dict
 from validation import parse_id, validate_trip
@@ -98,3 +98,18 @@ def delete_trip(trip_id):
     db.execute("DELETE FROM trips WHERE id = ?", (trip_id,))
     db.commit()
     return jsonify(message="Trip deleted")
+
+@bp.get("/<trip_id>/weather")
+def get_trip_weather(trip_id):
+    trip_id = parse_id(trip_id)
+    if trip_id is None:
+        return jsonify(error="Invalid trip id"), 400
+
+    trip = find_trip(trip_id)
+    if trip is None:
+        return jsonify(error="Trip not found"), 404
+
+    try:
+        return jsonify(get_weather(trip["destination"]))
+    except WeatherUnavailableError as error:
+        return jsonify(error=str(error)), 503

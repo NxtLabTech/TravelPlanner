@@ -6,6 +6,7 @@ import {
   deleteTrip,
   getActivities,
   getTrip,
+  getTripWeather,
   updateActivity,
 } from "../services/api.js";
 import { formatBudget, formatDate } from "../format.js";
@@ -17,6 +18,9 @@ export default function TripDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [trip, setTrip] = useState(null);
+  const [weather, setWeather] = useState(null);
+  const [weatherError, setWeatherError] = useState("");
+  const [weatherLoading, setWeatherLoading] = useState(true);
   const [activities, setActivities] = useState([]);
   const [error, setError] = useState("");
   // null = form hidden, {} = adding a new activity, otherwise the activity being edited
@@ -29,6 +33,37 @@ export default function TripDetailsPage() {
         setActivities(activityData);
       })
       .catch((err) => setError(err.message));
+  }, [id]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    setWeather(null);
+    setWeatherError("");
+    setWeatherLoading(true);
+
+    getTripWeather(id)
+      .then((data) => {
+        if (!cancelled) {
+          setWeather(data);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setWeatherError(
+            "Weather information is currently unavailable."
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setWeatherLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   async function reloadActivities() {
@@ -129,6 +164,60 @@ export default function TripDetailsPage() {
           </div>
         )}
       </dl>
+
+      <section
+        aria-label="Destination weather"
+        className="mt-6 rounded-lg border border-gray-200 bg-white p-4"
+      >
+        <h2 className="text-xl font-semibold">
+          Weather in {trip.destination}
+        </h2>
+
+        {weatherLoading ? (
+          <p className="mt-3 text-sm text-gray-500" role="status">
+            Loading weather...
+          </p>
+        ) : weatherError ? (
+          <p className="mt-3 text-sm text-gray-600" role="status">
+            {weatherError}
+          </p>
+        ) : weather ? (
+          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div>
+              <p className="text-sm text-gray-500">Temperature</p>
+              <p className="mt-1 text-lg font-semibold">
+                {weather.temperature ?? "—"}{weather.units?.temperature ?? "°C"}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-gray-500">Condition</p>
+              <p className="mt-1 font-medium">
+                {weather.condition ?? "Unknown"}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-gray-500">Humidity</p>
+              <p className="mt-1 font-medium">
+                {weather.humidity ?? "—"}%
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-gray-500">Wind speed</p>
+              <p className="mt-1 font-medium">
+                {weather.wind_speed ?? "—"}{" "}
+                {weather.units?.wind_speed ?? "km/h"}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <p className="mt-3 text-sm text-gray-600" role="status">
+            Weather information is currently unavailable.
+          </p>
+        )}
+      </section>
 
       <div className="mt-8 mb-3 flex items-center justify-between">
         <h2 className="text-xl font-semibold">Itinerary</h2>
