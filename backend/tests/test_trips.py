@@ -201,3 +201,61 @@ def test_unknown_route_returns_json(client):
     response = client.get("/api/nothing")
     assert response.status_code == 404
     assert response.get_json() == {"error": "Not Found"}
+
+
+def test_get_trip_weather(client, trip, monkeypatch):
+    from routes import trips as trips_routes
+
+    expected_weather = {
+        "destination": "Goa",
+        "temperature": 29.5,
+        "condition": "Partly cloudy",
+        "humidity": 72,
+        "wind_speed": 12.3,
+        "units": {
+            "temperature": "°C",
+            "wind_speed": "km/h",
+        },
+    }
+
+    def fake_get_weather(destination):
+        assert destination == "Goa"
+        return expected_weather
+
+    monkeypatch.setattr(trips_routes, "get_weather", fake_get_weather)
+
+    response = client.get(f"/api/trips/{trip['id']}/weather")
+
+    assert response.status_code == 200
+    assert response.get_json() == expected_weather
+
+
+def test_get_trip_weather_invalid_id(client):
+    response = client.get("/api/trips/abc/weather")
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "Invalid trip id"}
+
+
+def test_get_trip_weather_trip_not_found(client):
+    response = client.get("/api/trips/999/weather")
+
+    assert response.status_code == 404
+    assert response.get_json() == {"error": "Trip not found"}
+
+
+def test_get_trip_weather_service_unavailable(client, trip, monkeypatch):
+    from routes import trips as trips_routes
+    from services.weather import WeatherUnavailableError
+
+    def fake_get_weather(destination):
+        raise WeatherUnavailableError("Weather service is unavailable.")
+
+    monkeypatch.setattr(trips_routes, "get_weather", fake_get_weather)
+
+    response = client.get(f"/api/trips/{trip['id']}/weather")
+
+    assert response.status_code == 503
+    assert response.get_json() == {
+        "error": "Weather service is unavailable."
+    }

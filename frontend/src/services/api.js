@@ -22,6 +22,10 @@ export function getTrip(id) {
   return request("GET", `/api/trips/${id}`);
 }
 
+export function getTripWeather(id) {
+  return request("GET", `/api/trips/${id}/weather`);
+}
+
 export function createTrip(trip) {
   return request("POST", "/api/trips", trip);
 }
