@@ -8,6 +8,7 @@ const emptyTrip = {
   end_date: "",
   budget: "",
   description: "",
+    reminder_days: "",
 };
 
 const inputClass = "mt-1 w-full rounded border border-gray-300 bg-white px-3 py-2";
@@ -26,7 +27,11 @@ export default function TripForm({ initialTrip = emptyTrip, submitLabel, onSubmi
     setError("");
     setSaving(true);
     try {
-      await onSubmit({ ...trip, budget: trip.budget === "" ? 0 : Number(trip.budget) });
+            await onSubmit({
+        ...trip,
+        budget: trip.budget === "" ? 0 : Number(trip.budget),
+        reminder_days: trip.reminder_days === "" || trip.reminder_days == null ? null : Number(trip.reminder_days),
+      });
     } catch (err) {
       setError(err.message);
       setSaving(false);
@@ -100,6 +105,20 @@ export default function TripForm({ initialTrip = emptyTrip, submitLabel, onSubmi
           rows="3"
           className={inputClass}
         />
+      </label>
+            <label className="block text-sm font-medium">
+        Reminder
+        <select
+          name="reminder_days"
+          value={trip.reminder_days ?? ""}
+          onChange={handleChange}
+          className={inputClass}
+        >
+          <option value="">No reminder</option>
+          <option value="1">1 day before</option>
+          <option value="3">3 days before</option>
+          <option value="7">7 days before</option>
+        </select>
       </label>
 
       <div className="flex gap-3">

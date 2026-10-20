@@ -122,6 +122,14 @@ export default function TripDetailsPage() {
           <dt className="text-gray-500">Budget</dt>
           <dd className="mt-1">{formatBudget(trip.budget)}</dd>
         </div>
+                {trip.reminder_days && (
+          <div>
+            <dt className="text-gray-500">Reminder</dt>
+            <dd className="mt-1">
+              {trip.reminder_days} {trip.reminder_days === 1 ? "day" : "days"} before the trip
+            </dd>
+          </div>
+        )}
         {trip.description && (
           <div className="sm:col-span-4">
             <dt className="text-gray-500">Description</dt>

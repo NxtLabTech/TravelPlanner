@@ -37,8 +37,8 @@ def create_trip():
 
     db = get_db()
     cursor = db.execute(
-        """INSERT INTO trips (name, destination, start_date, end_date, budget, description)
-           VALUES (:name, :destination, :start_date, :end_date, :budget, :description)""",
+                """INSERT INTO trips (name, destination, start_date, end_date, budget, description, reminder_days)
+           VALUES (:name, :destination, :start_date, :end_date, :budget, :description, :reminder_days)""",
         trip,
     )
     db.commit()
@@ -77,8 +77,9 @@ def update_trip(trip_id):
         return jsonify(error="Some activities fall outside the new trip dates. Edit or delete them first"), 400
 
     db.execute(
-        """UPDATE trips SET name = :name, destination = :destination, start_date = :start_date,
-           end_date = :end_date, budget = :budget, description = :description
+                """UPDATE trips SET name = :name, destination = :destination, start_date = :start_date,
+           end_date = :end_date, budget = :budget, description = :description,
+           reminder_days = :reminder_days
            WHERE id = :id""",
         {**trip, "id": trip_id},
     )

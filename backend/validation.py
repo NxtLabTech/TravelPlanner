@@ -1,11 +1,12 @@
 import math
-from datetime import datetime
+from datetime import date, datetime
 
 # Each validate_* function returns (cleaned_values, error_message).
 # Exactly one of the two is None.
 
 
 MAX_ID = 2**63 - 1  # largest integer SQLite can store
+ALLOWED_REMINDER_DAYS = (1, 3, 7)
 MAX_BUDGET = 10**12
 
 
@@ -66,6 +67,14 @@ def validate_trip(data):
         return None, "Budget cannot be negative"
     if budget > MAX_BUDGET:
         return None, "Budget is too large"
+    reminder_days = data.get("reminder_days")
+    if reminder_days in (None, ""):
+        reminder_days = None
+    else:
+        if isinstance(reminder_days, bool) or reminder_days not in ALLOWED_REMINDER_DAYS:
+            return None, "Reminder must be 1, 3, or 7 days before the trip"
+        if end_date < date.today():
+            return None, "Cannot set a reminder for a completed trip"
 
     trip = {
         "name": name,
@@ -74,6 +83,7 @@ def validate_trip(data):
         "end_date": end_date.isoformat(),
         "budget": budget,
         "description": clean_text(data, "description"),
+                "reminder_days": reminder_days,
     }
     return trip, None
 

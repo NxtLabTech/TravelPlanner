@@ -11,9 +11,9 @@ CREATE TABLE IF NOT EXISTS trips (
     end_date TEXT NOT NULL,
     budget NUMERIC NOT NULL DEFAULT 0,
     description TEXT NOT NULL DEFAULT '',
+    reminder_days INTEGER,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-
 CREATE TABLE IF NOT EXISTS activities (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     trip_id INTEGER NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
@@ -45,4 +45,9 @@ def close_db(error=None):
 def init_db(path):
     db = sqlite3.connect(path)
     db.executescript(SCHEMA)
+    # Migration: add reminder_days to databases created before this column existed
+    columns = [row[1] for row in db.execute("PRAGMA table_info(trips)")]
+    if "reminder_days" not in columns:
+        db.execute("ALTER TABLE trips ADD COLUMN reminder_days INTEGER")
+        db.commit()
     db.close()

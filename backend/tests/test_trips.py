@@ -201,3 +201,44 @@ def test_unknown_route_returns_json(client):
     response = client.get("/api/nothing")
     assert response.status_code == 404
     assert response.get_json() == {"error": "Not Found"}
+def test_create_trip_with_reminder(client):
+    response = client.post("/api/trips", json=trip_data(reminder_days=3))
+    assert response.status_code == 201
+    assert response.get_json()["reminder_days"] == 3
+
+
+def test_create_trip_without_reminder_is_null(client):
+    response = client.post("/api/trips", json=trip_data())
+    assert response.status_code == 201
+    assert response.get_json()["reminder_days"] is None
+
+
+@pytest.mark.parametrize("value", [1, 3, 7])
+def test_allowed_reminder_values(client, value):
+    response = client.post("/api/trips", json=trip_data(reminder_days=value))
+    assert response.status_code == 201
+    assert response.get_json()["reminder_days"] == value
+
+
+@pytest.mark.parametrize("value", [0, 2, -1, 30, "3", True, 3.5])
+def test_invalid_reminder_values(client, value):
+    response = client.post("/api/trips", json=trip_data(reminder_days=value))
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "Reminder must be 1, 3, or 7 days before the trip"}
+
+
+def test_no_reminder_for_completed_trip(client):
+    data = trip_data(start_date=days_from_today(-10), end_date=days_from_today(-5), reminder_days=1)
+    response = client.post("/api/trips", json=data)
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "Cannot set a reminder for a completed trip"}
+
+
+def test_update_trip_reminder(client, trip):
+    response = client.put(f"/api/trips/{trip['id']}", json=trip_data(reminder_days=7))
+    assert response.status_code == 200
+    assert client.get(f"/api/trips/{trip['id']}").get_json()["reminder_days"] == 7
+
+    response = client.put(f"/api/trips/{trip['id']}", json=trip_data())
+    assert response.status_code == 200
+    assert client.get(f"/api/trips/{trip['id']}").get_json()["reminder_days"] is None
