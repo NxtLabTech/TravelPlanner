@@ -12,6 +12,7 @@ import { formatBudget, formatDate } from "../format.js";
 import StatusBadge from "../components/StatusBadge.jsx";
 import ActivityForm from "../components/ActivityForm.jsx";
 import Itinerary from "../components/Itinerary.jsx";
+import { exportActivitiesAsCsv } from "../csv.js";
 
 export default function TripDetailsPage() {
   const { id } = useParams();
@@ -92,13 +93,21 @@ export default function TripDetailsPage() {
           <h1 className="text-2xl font-semibold">{trip.name}</h1>
           <p className="text-gray-600">{trip.destination}</p>
         </div>
-        <div className="flex gap-3">
-          <Link to={`/trips/${id}/edit`} className="rounded border border-gray-300 px-4 py-2 text-sm">
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => exportActivitiesAsCsv(trip, activities)}
+            className="rounded border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50"
+            title={activities.length === 0 ? "Export empty activities CSV" : "Export activities as CSV"}
+          >
+            Export CSV
+          </button>
+          <Link to={`/trips/${id}/edit`} className="rounded border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50">
             Edit trip
           </Link>
           <button
             onClick={handleDeleteTrip}
-            className="rounded border border-red-300 px-4 py-2 text-sm text-red-700"
+            className="rounded border border-red-300 px-4 py-2 text-sm text-red-700 hover:bg-red-50"
           >
             Delete trip
           </button>

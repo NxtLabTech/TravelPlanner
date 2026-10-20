@@ -11,6 +11,7 @@ A small travel planning app. Create trips, keep an itinerary of activities for e
 - Itinerary grouped by date
 - Search trips by name or destination
 - Filter trips by status: upcoming, ongoing, completed (calculated from the trip dates)
+- Export trip activities to CSV
 
 ## Tech stack
 
