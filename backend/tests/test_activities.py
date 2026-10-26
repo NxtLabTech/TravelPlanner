@@ -111,3 +111,21 @@ def test_activity_allowed_on_first_and_last_trip_day(client, trip):
 def test_update_activity_invalid_date(client, activity):
     response = client.put(f"/api/activities/{activity['id']}", json=activity_data(date="2027-01-01"))
     assert response.status_code == 400
+
+
+def test_update_activity_invalid_json(client, activity):
+    response = client.put(
+        f"/api/activities/{activity['id']}",
+        data="not a json string",
+        content_type="application/json",
+    )
+    assert response.status_code == 400
+
+
+def test_create_activity_invalid_json(client, trip):
+    response = client.post(
+        f"/api/trips/{trip['id']}/activities",
+        data="not a json string",
+        content_type="application/json",
+    )
+    assert response.status_code == 400
