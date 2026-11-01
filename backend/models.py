@@ -26,3 +26,15 @@ def find_trip(trip_id):
 
 def find_activity(activity_id):
     return get_db().execute("SELECT * FROM activities WHERE id = ?", (activity_id,)).fetchone()
+
+
+def find_conflicting_activity(trip_id, date, time, exclude_activity_id=None):
+    if not time:
+        return None
+    query = "SELECT * FROM activities WHERE trip_id = ? AND date = ? AND time = ?"
+    params = [trip_id, date, time]
+    if exclude_activity_id is not None:
+        query += " AND id != ?"
+        params.append(exclude_activity_id)
+    return get_db().execute(query, params).fetchone()
+
