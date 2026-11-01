@@ -111,3 +111,70 @@ def test_activity_allowed_on_first_and_last_trip_day(client, trip):
 def test_update_activity_invalid_date(client, activity):
     response = client.put(f"/api/activities/{activity['id']}", json=activity_data(date="2027-01-01"))
     assert response.status_code == 400
+
+
+def test_create_activity_conflict_same_date_and_time(client, trip):
+    url = f"/api/trips/{trip['id']}/activities"
+    res1 = client.post(url, json=activity_data(title="Museum", date="2026-11-11", time="10:00"))
+    assert res1.status_code == 201
+
+    res2 = client.post(url, json=activity_data(title="Restaurant", date="2026-11-11", time="10:00"))
+    assert res2.status_code == 400
+    assert res2.get_json() == {"error": "An activity is already scheduled for this date and time"}
+
+
+def test_update_activity_conflict_with_another_activity(client, trip):
+    url = f"/api/trips/{trip['id']}/activities"
+    res1 = client.post(url, json=activity_data(title="Museum", date="2026-11-11", time="10:00"))
+    assert res1.status_code == 201
+    act2 = client.post(url, json=activity_data(title="Restaurant", date="2026-11-11", time="12:00")).get_json()
+
+    update_res = client.put(f"/api/activities/{act2['id']}", json=activity_data(title="Restaurant", date="2026-11-11", time="10:00"))
+    assert update_res.status_code == 400
+    assert update_res.get_json() == {"error": "An activity is already scheduled for this date and time"}
+
+
+def test_update_activity_same_date_and_time_self_succeeds(client, trip):
+    url = f"/api/trips/{trip['id']}/activities"
+    act = client.post(url, json=activity_data(title="Museum", date="2026-11-11", time="10:00")).get_json()
+
+    update_res = client.put(f"/api/activities/{act['id']}", json=activity_data(title="Art Museum", date="2026-11-11", time="10:00", notes="Updated notes"))
+    assert update_res.status_code == 200
+    assert update_res.get_json()["title"] == "Art Museum"
+
+
+def test_activities_allowed_at_different_times_same_date(client, trip):
+    url = f"/api/trips/{trip['id']}/activities"
+    res1 = client.post(url, json=activity_data(title="Museum", date="2026-11-11", time="10:00"))
+    res2 = client.post(url, json=activity_data(title="Restaurant", date="2026-11-11", time="12:00"))
+    assert res1.status_code == 201
+    assert res2.status_code == 201
+
+
+def test_activities_allowed_at_same_time_different_dates(client, trip):
+    url = f"/api/trips/{trip['id']}/activities"
+    res1 = client.post(url, json=activity_data(title="Museum", date="2026-11-11", time="10:00"))
+    res2 = client.post(url, json=activity_data(title="Restaurant", date="2026-11-12", time="10:00"))
+    assert res1.status_code == 201
+    assert res2.status_code == 201
+
+
+def test_activities_same_date_and_time_different_trips_allowed(client, trip):
+    other_trip = client.post("/api/trips", json={
+        "name": "Kerala Trip", "destination": "Kerala",
+        "start_date": "2026-11-10", "end_date": "2026-11-14",
+    }).get_json()
+
+    res1 = client.post(f"/api/trips/{trip['id']}/activities", json=activity_data(title="Museum", date="2026-11-11", time="10:00"))
+    res2 = client.post(f"/api/trips/{other_trip['id']}/activities", json=activity_data(title="Museum", date="2026-11-11", time="10:00"))
+    assert res1.status_code == 201
+    assert res2.status_code == 201
+
+
+def test_activities_without_time_do_not_conflict(client, trip):
+    url = f"/api/trips/{trip['id']}/activities"
+    res1 = client.post(url, json={"title": "Explore city", "date": "2026-11-11"})
+    res2 = client.post(url, json={"title": "Relax at beach", "date": "2026-11-11"})
+    assert res1.status_code == 201
+    assert res2.status_code == 201
+
