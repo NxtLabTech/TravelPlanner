@@ -33,6 +33,8 @@ def create_activity(trip_id):
     activity, error = validate_activity(request.get_json(silent=True), trip)
     if error:
         return jsonify(error=error), 400
+    if activity is None:
+        return jsonify(error="Invalid activity data"), 400
 
     db = get_db()
     cursor = db.execute(
@@ -57,6 +59,8 @@ def update_activity(activity_id):
     activity, error = validate_activity(request.get_json(silent=True), trip)
     if error:
         return jsonify(error=error), 400
+    if activity is None:
+        return jsonify(error="Invalid activity data"), 400
 
     db = get_db()
     db.execute(
