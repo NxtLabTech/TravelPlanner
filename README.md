@@ -9,7 +9,8 @@ A small travel planning app. Create trips, keep an itinerary of activities for e
 - Create, view, edit and delete trips
 - Add, edit and delete activities for a trip, with an optional category and cost
 - Track spending against the trip budget
-- Itinerary grouped by date
+- Day-by-day itinerary that highlights today and shows days with nothing planned
+- Print a trip or save it as a PDF
 - Search trips by name or destination
 - Filter trips by status: upcoming, ongoing, completed (calculated from the trip dates)
 

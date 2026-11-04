@@ -13,7 +13,7 @@ export default function Toast({ message, actionLabel, onAction, onDismiss }) {
   return (
     <div
       role="status"
-      className="fixed inset-x-4 bottom-4 z-10 mx-auto flex max-w-sm items-center justify-between gap-4 rounded bg-gray-900 px-4 py-3 text-sm text-white shadow-lg"
+      className="fixed inset-x-4 bottom-4 z-10 print:hidden mx-auto flex max-w-sm items-center justify-between gap-4 rounded bg-gray-900 px-4 py-3 text-sm text-white shadow-lg"
     >
       <span>{message}</span>
       <div className="flex shrink-0 gap-3">

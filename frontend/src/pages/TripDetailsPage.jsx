@@ -135,18 +135,21 @@ export default function TripDetailsPage() {
 
   return (
     <div>
-      <Link to="/" className="text-sm text-blue-600 hover:underline">
+      <Link to="/" className="text-sm text-blue-600 hover:underline print:hidden">
         ← All trips
       </Link>
 
-      {error && <p className="mt-3 rounded bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+      {error && <p className="mt-3 rounded bg-red-50 px-3 py-2 text-sm text-red-700 print:hidden">{error}</p>}
 
       <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold">{trip.name}</h1>
           <p className="text-gray-600">{trip.destination}</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-3 print:hidden">
+          <button onClick={() => window.print()} className="rounded border border-gray-300 px-4 py-2 text-sm">
+            Print
+          </button>
           <Link to={`/trips/${id}/edit`} className="rounded border border-gray-300 px-4 py-2 text-sm">
             Edit trip
           </Link>
@@ -196,14 +199,14 @@ export default function TripDetailsPage() {
         {!isAdding && (
           <button
             onClick={() => setFormActivity({})}
-            className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
+            className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 print:hidden"
           >
             Add activity
           </button>
         )}
       </div>
 
-      {isAdding && <div className="mb-5">{renderActivityForm(formActivity)}</div>}
+      {isAdding && <div className="mb-5 print:hidden">{renderActivityForm(formActivity)}</div>}
 
       <Itinerary
         startDate={trip.start_date}

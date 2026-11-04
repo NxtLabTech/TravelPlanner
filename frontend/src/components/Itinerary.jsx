@@ -76,14 +76,14 @@ function ActivityItem({ activity, onEdit, onDelete }) {
         <button
           onClick={() => onEdit(activity)}
           aria-label={`Edit ${activity.title}`}
-          className="text-blue-600 hover:underline"
+          className="text-blue-600 hover:underline print:hidden"
         >
           Edit
         </button>
         <button
           onClick={() => onDelete(activity)}
           aria-label={`Delete ${activity.title}`}
-          className="text-red-600 hover:underline"
+          className="text-red-600 hover:underline print:hidden"
         >
           Delete
         </button>
@@ -107,7 +107,7 @@ export default function Itinerary({
   return (
     <div className="space-y-5">
       {buildSections(startDate, endDate, activities, today).map((section) => (
-        <section key={section.firstDay.date}>
+        <section key={section.firstDay.date} className="break-inside-avoid">
           <SectionHeading section={section} />
           {section.empty ? (
             <p

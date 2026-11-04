@@ -61,7 +61,15 @@ describe("TripDetailsPage", () => {
     expect(await screen.findByText("10 – 14 Nov 2026")).toBeInTheDocument();
     expect(screen.getByText("5 days · 1 activity")).toBeInTheDocument();
     expect(screen.getByText("₹500 of ₹20,000 spent")).toBeInTheDocument();
-    expect(document.title).toBe("Goa Trip · TravelPlanner");
+    await waitFor(() => expect(document.title).toBe("Goa Trip · TravelPlanner"));
+  });
+
+  it("opens the print dialog", async () => {
+    const print = vi.spyOn(window, "print").mockImplementation(() => {});
+    renderPage();
+    await userEvent.click(await screen.findByRole("button", { name: "Print" }));
+    expect(print).toHaveBeenCalled();
+    print.mockRestore();
   });
 
   it("asks before deleting an activity and does nothing on cancel", async () => {

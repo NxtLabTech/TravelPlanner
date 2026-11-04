@@ -18,7 +18,7 @@ export default function ConfirmDialog({ title, message, confirmLabel = "Delete",
 
   return (
     <div
-      className="fixed inset-0 z-20 flex items-center justify-center bg-black/40 px-4"
+      className="fixed inset-0 z-20 flex print:hidden items-center justify-center bg-black/40 px-4"
       onClick={(event) => event.target === event.currentTarget && onCancel()}
     >
       <div
