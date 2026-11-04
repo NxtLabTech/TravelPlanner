@@ -13,4 +13,7 @@ describe("formatBudget", () => {
     expect(formatBudget(20000)).toBe("₹20,000");
     expect(formatBudget(0)).toBe("₹0");
   });
+  it("formats large amounts using Indian digit grouping", () => {
+    expect(formatBudget(1234567)).toBe("₹12,34,567");
+  });
 });
