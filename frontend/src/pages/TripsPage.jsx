@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getTrips } from "../services/api.js";
-import { formatBudget, formatDate } from "../format.js";
+import { formatBudget, formatDateRange } from "../format.js";
 import StatusBadge from "../components/StatusBadge.jsx";
 
 export default function TripsPage() {
@@ -79,9 +79,7 @@ export default function TripsPage() {
                   <p className="text-sm text-gray-600">{trip.destination}</p>
                 </div>
                 <div className="flex items-center gap-4 text-sm text-gray-600">
-                  <span>
-                    {formatDate(trip.start_date)} – {formatDate(trip.end_date)}
-                  </span>
+                  <span>{formatDateRange(trip.start_date, trip.end_date)}</span>
                   <span>{formatBudget(trip.budget)}</span>
                   <StatusBadge status={trip.status} />
                 </div>

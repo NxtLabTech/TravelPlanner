@@ -8,7 +8,7 @@ import {
   getTrip,
   updateActivity,
 } from "../services/api.js";
-import { formatBudget, formatDate } from "../format.js";
+import { countDays, formatBudget, formatDateRange, pluralize } from "../format.js";
 import StatusBadge from "../components/StatusBadge.jsx";
 import ActivityForm from "../components/ActivityForm.jsx";
 import Itinerary from "../components/Itinerary.jsx";
@@ -114,8 +114,13 @@ export default function TripDetailsPage() {
         </div>
         <div>
           <dt className="text-gray-500">Dates</dt>
+          <dd className="mt-1">{formatDateRange(trip.start_date, trip.end_date)}</dd>
+        </div>
+        <div>
+          <dt className="text-gray-500">Length</dt>
           <dd className="mt-1">
-            {formatDate(trip.start_date)} – {formatDate(trip.end_date)}
+            {pluralize(countDays(trip.start_date, trip.end_date), "day")} ·{" "}
+            {pluralize(activities.length, "activity", "activities")}
           </dd>
         </div>
         <div>
