@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS activities (
     title TEXT NOT NULL,
     date TEXT NOT NULL,
     time TEXT NOT NULL DEFAULT '',
+    duration_minutes INTEGER,
     location TEXT NOT NULL DEFAULT '',
     notes TEXT NOT NULL DEFAULT ''
 );
@@ -45,4 +46,9 @@ def close_db(error=None):
 def init_db(path):
     db = sqlite3.connect(path)
     db.executescript(SCHEMA)
+    # Databases created before activities had a duration need the new column.
+    columns = [row[1] for row in db.execute("PRAGMA table_info(activities)")]
+    if "duration_minutes" not in columns:
+        db.execute("ALTER TABLE activities ADD COLUMN duration_minutes INTEGER")
+        db.commit()
     db.close()

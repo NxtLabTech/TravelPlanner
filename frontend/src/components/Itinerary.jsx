@@ -1,4 +1,4 @@
-import { formatDate } from "../format.js";
+import { formatDate, formatDuration } from "../format.js";
 
 // Activities arrive sorted by date and time, so grouping is a single pass.
 function groupByDate(activities) {
@@ -29,9 +29,16 @@ export default function Itinerary({ activities, onEdit, onDelete }) {
               <li key={activity.id} className="flex items-start justify-between gap-4 p-3">
                 <div>
                   <p className="font-medium">
-                    {activity.time && <span className="mr-2 text-gray-500">{activity.time}</span>}
+                    {activity.time && (
+                      <span className="mr-2 text-gray-500">
+                        {activity.end_time ? `${activity.time}–${activity.end_time}` : activity.time}
+                      </span>
+                    )}
                     {activity.title}
                   </p>
+                  {activity.duration_minutes && (
+                    <p className="text-sm text-gray-600">Duration: {formatDuration(activity.duration_minutes)}</p>
+                  )}
                   {activity.location && <p className="text-sm text-gray-600">{activity.location}</p>}
                   {activity.notes && <p className="text-sm text-gray-500">{activity.notes}</p>}
                 </div>

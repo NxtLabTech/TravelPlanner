@@ -4,9 +4,18 @@ import { describe, expect, it, vi } from "vitest";
 import Itinerary from "./Itinerary.jsx";
 
 const activities = [
-  { id: 1, title: "Beach", date: "2026-11-10", time: "10:00", location: "Baga", notes: "" },
-  { id: 2, title: "Dinner", date: "2026-11-10", time: "20:00", location: "", notes: "" },
-  { id: 3, title: "Fort visit", date: "2026-11-11", time: "", location: "", notes: "" },
+  {
+    id: 1, title: "Beach", date: "2026-11-10", time: "10:00",
+    duration_minutes: 120, end_time: "12:00", location: "Baga", notes: "",
+  },
+  {
+    id: 2, title: "Dinner", date: "2026-11-10", time: "20:00",
+    duration_minutes: null, end_time: null, location: "", notes: "",
+  },
+  {
+    id: 3, title: "Fort visit", date: "2026-11-11", time: "",
+    duration_minutes: null, end_time: null, location: "", notes: "",
+  },
 ];
 
 describe("Itinerary", () => {
@@ -20,6 +29,18 @@ describe("Itinerary", () => {
     expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(2);
     expect(screen.getByRole("heading", { name: "10 Nov 2026" })).toBeInTheDocument();
     expect(screen.getByText("Fort visit")).toBeInTheDocument();
+  });
+
+  it("shows the time range and duration of an activity", () => {
+    render(<Itinerary activities={activities} />);
+    expect(screen.getByText("10:00–12:00")).toBeInTheDocument();
+    expect(screen.getByText("Duration: 2 hours")).toBeInTheDocument();
+  });
+
+  it("shows only the start time when there is no duration", () => {
+    render(<Itinerary activities={activities} />);
+    expect(screen.getByText("20:00")).toBeInTheDocument();
+    expect(screen.getAllByText(/^Duration:/)).toHaveLength(1);
   });
 
   it("calls onEdit and onDelete with the activity", async () => {

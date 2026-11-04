@@ -1,12 +1,32 @@
 import { useState } from "react";
 
-const emptyActivity = { title: "", date: "", time: "", location: "", notes: "" };
+const emptyActivity = { title: "", date: "", time: "", duration_minutes: null, location: "", notes: "" };
 
 const inputClass = "mt-1 w-full rounded border border-gray-300 bg-white px-3 py-2";
 
+// The form edits the duration as separate hours and minutes fields;
+// the API stores it as a single number of minutes.
+function toFormValues(activity) {
+  const { duration_minutes, ...rest } = activity;
+  return {
+    ...rest,
+    duration_hours: duration_minutes ? String(Math.floor(duration_minutes / 60)) : "",
+    duration_mins: duration_minutes ? String(duration_minutes % 60) : "",
+  };
+}
+
+function toActivity(values) {
+  const { duration_hours, duration_mins, ...rest } = values;
+  const hasDuration = duration_hours !== "" || duration_mins !== "";
+  return {
+    ...rest,
+    duration_minutes: hasDuration ? Number(duration_hours || 0) * 60 + Number(duration_mins || 0) : null,
+  };
+}
+
 // minDate / maxDate are the trip's start and end dates.
 export default function ActivityForm({ initialActivity = emptyActivity, minDate, maxDate, submitLabel, onSubmit, onCancel }) {
-  const [activity, setActivity] = useState(initialActivity);
+  const [activity, setActivity] = useState(() => toFormValues(initialActivity));
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -19,7 +39,7 @@ export default function ActivityForm({ initialActivity = emptyActivity, minDate,
     setError("");
     setSaving(true);
     try {
-      await onSubmit(activity);
+      await onSubmit(toActivity(activity));
     } catch (err) {
       setError(err.message);
       setSaving(false);
@@ -50,8 +70,37 @@ export default function ActivityForm({ initialActivity = emptyActivity, minDate,
           />
         </label>
         <label className="block text-sm font-medium">
-          Time
+          Start time
           <input type="time" name="time" value={activity.time} onChange={handleChange} className={inputClass} />
+        </label>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="block text-sm font-medium">
+          Duration (hours)
+          <input
+            type="number"
+            name="duration_hours"
+            value={activity.duration_hours}
+            min="0"
+            max="23"
+            step="1"
+            onChange={handleChange}
+            className={inputClass}
+          />
+        </label>
+        <label className="block text-sm font-medium">
+          Duration (minutes)
+          <input
+            type="number"
+            name="duration_mins"
+            value={activity.duration_mins}
+            min="0"
+            max="59"
+            step="1"
+            onChange={handleChange}
+            className={inputClass}
+          />
         </label>
       </div>
 

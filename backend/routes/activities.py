@@ -1,10 +1,16 @@
 from flask import Blueprint, jsonify, request
 
 from database import get_db
-from models import find_activity, find_trip
+from models import activity_to_dict, find_activity, find_overlapping_activity, find_trip
 from validation import parse_id, validate_activity
 
 bp = Blueprint("activities", __name__, url_prefix="/api")
+
+
+def overlap_error(other):
+    other = activity_to_dict(other)
+    times = f"{other['time']}–{other['end_time']}" if other["end_time"] else other["time"]
+    return jsonify(error=f'Overlaps with "{other["title"]}" ({times})'), 409
 
 
 @bp.get("/trips/<trip_id>/activities")
@@ -18,7 +24,7 @@ def list_activities(trip_id):
     rows = get_db().execute(
         "SELECT * FROM activities WHERE trip_id = ? ORDER BY date, time, id", (trip_id,)
     ).fetchall()
-    return jsonify([dict(row) for row in rows])
+    return jsonify([activity_to_dict(row) for row in rows])
 
 
 @bp.post("/trips/<trip_id>/activities")
@@ -33,15 +39,20 @@ def create_activity(trip_id):
     activity, error = validate_activity(request.get_json(silent=True), trip)
     if error:
         return jsonify(error=error), 400
+    if activity is None:
+        return jsonify(error="Invalid activity data"), 400
+    other = find_overlapping_activity(trip_id, activity)
+    if other is not None:
+        return overlap_error(other)
 
     db = get_db()
     cursor = db.execute(
-        """INSERT INTO activities (trip_id, title, date, time, location, notes)
-           VALUES (:trip_id, :title, :date, :time, :location, :notes)""",
+        """INSERT INTO activities (trip_id, title, date, time, duration_minutes, location, notes)
+           VALUES (:trip_id, :title, :date, :time, :duration_minutes, :location, :notes)""",
         {**activity, "trip_id": trip_id},
     )
     db.commit()
-    return jsonify(dict(find_activity(cursor.lastrowid))), 201
+    return jsonify(activity_to_dict(find_activity(cursor.lastrowid))), 201
 
 
 @bp.put("/activities/<activity_id>")
@@ -57,15 +68,20 @@ def update_activity(activity_id):
     activity, error = validate_activity(request.get_json(silent=True), trip)
     if error:
         return jsonify(error=error), 400
+    if activity is None:
+        return jsonify(error="Invalid activity data"), 400
+    other = find_overlapping_activity(existing["trip_id"], activity, exclude_id=activity_id)
+    if other is not None:
+        return overlap_error(other)
 
     db = get_db()
     db.execute(
         """UPDATE activities SET title = :title, date = :date, time = :time,
-           location = :location, notes = :notes WHERE id = :id""",
+           duration_minutes = :duration_minutes, location = :location, notes = :notes WHERE id = :id""",
         {**activity, "id": activity_id},
     )
     db.commit()
-    return jsonify(dict(find_activity(activity_id)))
+    return jsonify(activity_to_dict(find_activity(activity_id)))
 
 
 @bp.delete("/activities/<activity_id>")

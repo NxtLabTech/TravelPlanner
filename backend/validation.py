@@ -7,6 +7,7 @@ from datetime import datetime
 
 MAX_ID = 2**63 - 1  # largest integer SQLite can store
 MAX_BUDGET = 10**12
+MINUTES_PER_DAY = 24 * 60
 
 
 def parse_id(value):
@@ -35,6 +36,27 @@ def read_date(data, key, label):
     if parsed is None:
         return None, f"{label} must be a valid date (YYYY-MM-DD)"
     return parsed, None
+
+
+def time_to_minutes(value):
+    hours, minutes = value.split(":")
+    return int(hours) * 60 + int(minutes)
+
+
+def read_duration(data, time):
+    duration = data.get("duration_minutes")
+    if duration in (None, ""):
+        return None, None
+    if isinstance(duration, bool) or not isinstance(duration, int):
+        return None, "Duration must be a whole number of minutes"
+    if duration <= 0:
+        return None, "Duration must be greater than zero"
+    if not time:
+        return None, "Start time is required when a duration is set"
+    # Activities belong to a single day, so they cannot run past midnight.
+    if time_to_minutes(time) + duration >= MINUTES_PER_DAY:
+        return None, "Activity must end before midnight"
+    return duration, None
 
 
 def validate_trip(data):
@@ -99,10 +121,15 @@ def validate_activity(data, trip):
         except ValueError:
             return None, "Time must be in HH:MM format"
 
+    duration, error = read_duration(data, time)
+    if error:
+        return None, error
+
     activity = {
         "title": title,
         "date": activity_date.isoformat(),
         "time": time,
+        "duration_minutes": duration,
         "location": clean_text(data, "location"),
         "notes": clean_text(data, "notes"),
     }

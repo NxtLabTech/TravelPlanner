@@ -9,6 +9,8 @@ A small travel planning app. Create trips, keep an itinerary of activities for e
 - Create, view, edit and delete trips
 - Add, edit and delete activities for a trip
 - Itinerary grouped by date
+- Optional start time and duration for activities, with the end time calculated automatically
+- Overlapping activities on the same day are rejected
 - Search trips by name or destination
 - Filter trips by status: upcoming, ongoing, completed (calculated from the trip dates)
 
@@ -104,11 +106,11 @@ Activities
 | Method | Endpoint | Description |
 | ------ | -------- | ----------- |
 | GET | `/api/trips/<trip_id>/activities` | List a trip's activities, ordered by date and time |
-| POST | `/api/trips/<trip_id>/activities` | Add an activity |
-| PUT | `/api/activities/<id>` | Update an activity |
+| POST | `/api/trips/<trip_id>/activities` | Add an activity. Rejected with 409 if it overlaps another activity that day |
+| PUT | `/api/activities/<id>` | Update an activity. Rejected with 409 if it overlaps another activity that day |
 | DELETE | `/api/activities/<id>` | Delete an activity |
 
-Errors are returned as JSON, for example `{"error": "End date cannot be before start date"}`, with status 400 (invalid input), 404 (not found) or 500 (server error).
+Errors are returned as JSON, for example `{"error": "End date cannot be before start date"}`, with status 400 (invalid input), 404 (not found), 409 (overlapping activity) or 500 (server error).
 
 Example trip:
 
@@ -123,17 +125,20 @@ Example trip:
 }
 ```
 
-Example activity (its date must fall within the trip dates; `time` is optional, `HH:MM`):
+Example activity (its date must fall within the trip dates; `time` is the optional start time, `HH:MM`; `duration_minutes` is an optional positive whole number, needs a start time, and the activity must end before midnight):
 
 ```json
 {
   "title": "Visit Baga Beach",
   "date": "2026-11-10",
   "time": "10:00",
+  "duration_minutes": 120,
   "location": "Baga Beach",
   "notes": "Spend the morning at the beach"
 }
 ```
+
+Activity responses also include `end_time` (`HH:MM`, or `null` when there is no duration), for example `"end_time": "12:00"` for the activity above. An activity without a duration occupies only its start time when checking for overlaps; back-to-back activities (one ending at 12:00, the next starting at 12:00) are allowed.
 
 ## Running tests
 
