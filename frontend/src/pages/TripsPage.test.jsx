@@ -43,8 +43,7 @@ describe("TripsPage", () => {
   it("sets the browser tab title", async () => {
     getTrips.mockResolvedValue([]);
     renderPage();
-    await screen.findByText(/No trips yet/);
-    expect(document.title).toBe("Trips · TravelPlanner");
+    await waitFor(() => expect(document.title).toBe("Trips · TravelPlanner"));
   });
 
   it("invites the user to plan a trip when there are none", async () => {
