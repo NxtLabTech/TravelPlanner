@@ -8,6 +8,23 @@ from datetime import datetime
 MAX_ID = 2**63 - 1  # largest integer SQLite can store
 MAX_BUDGET = 10**12
 
+DOCUMENT_TYPES = (
+    "flight_ticket",
+    "hotel_booking",
+    "train_ticket",
+    "insurance",
+    "other",
+)
+
+
+def validate_doc_type(doc_type):
+    if not isinstance(doc_type, str) or not doc_type.strip():
+        return None, "Document type is required"
+    doc_type = doc_type.strip().lower()
+    if doc_type not in DOCUMENT_TYPES:
+        return None, f"Document type must be one of: {', '.join(DOCUMENT_TYPES)}"
+    return doc_type, None
+
 
 def parse_id(value):
     if not (value.isascii() and value.isdigit()):

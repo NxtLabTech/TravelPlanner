@@ -25,6 +25,17 @@ CREATE TABLE IF NOT EXISTS activities (
 );
 
 CREATE INDEX IF NOT EXISTS idx_activities_trip_id ON activities(trip_id);
+
+CREATE TABLE IF NOT EXISTS documents (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    trip_id     INTEGER NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+    name        TEXT    NOT NULL,
+    doc_type    TEXT    NOT NULL,
+    stored_name TEXT    NOT NULL,
+    upload_date TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_documents_trip_id ON documents(trip_id);
 """
 
 
