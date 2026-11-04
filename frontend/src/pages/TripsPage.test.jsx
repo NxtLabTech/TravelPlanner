@@ -37,6 +37,14 @@ describe("TripsPage", () => {
     expect(await screen.findByText("Goa Trip")).toBeInTheDocument();
     expect(screen.getByText("₹20,000")).toBeInTheDocument();
     expect(screen.getByText("upcoming")).toBeInTheDocument();
+    expect(screen.getByText("10 – 14 Nov 2026")).toBeInTheDocument();
+  });
+
+  it("sets the browser tab title", async () => {
+    getTrips.mockResolvedValue([]);
+    renderPage();
+    await screen.findByText("No trips found.");
+    expect(document.title).toBe("Trips · TravelPlanner");
   });
 
   it("shows a message when no trips are found", async () => {

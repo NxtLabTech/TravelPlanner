@@ -1,9 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { createTrip } from "../services/api.js";
 import TripForm from "../components/TripForm.jsx";
+import useDocumentTitle from "../useDocumentTitle.js";
 
 export default function NewTripPage() {
   const navigate = useNavigate();
+  useDocumentTitle("New trip");
 
   async function handleSubmit(trip) {
     const created = await createTrip(trip);

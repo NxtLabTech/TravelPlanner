@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getTrip, updateTrip } from "../services/api.js";
 import TripForm from "../components/TripForm.jsx";
+import useDocumentTitle from "../useDocumentTitle.js";
 
 export default function EditTripPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [trip, setTrip] = useState(null);
   const [error, setError] = useState("");
+  useDocumentTitle(trip ? `Edit ${trip.name}` : "Edit trip");
 
   useEffect(() => {
     getTrip(id).then(setTrip).catch((err) => setError(err.message));

@@ -12,6 +12,7 @@ import { countDays, formatBudget, formatDateRange, pluralize } from "../format.j
 import StatusBadge from "../components/StatusBadge.jsx";
 import ActivityForm from "../components/ActivityForm.jsx";
 import Itinerary from "../components/Itinerary.jsx";
+import useDocumentTitle from "../useDocumentTitle.js";
 
 export default function TripDetailsPage() {
   const { id } = useParams();
@@ -21,6 +22,7 @@ export default function TripDetailsPage() {
   const [error, setError] = useState("");
   // null = form hidden, {} = adding a new activity, otherwise the activity being edited
   const [formActivity, setFormActivity] = useState(null);
+  useDocumentTitle(trip?.name);
 
   useEffect(() => {
     Promise.all([getTrip(id), getActivities(id)])

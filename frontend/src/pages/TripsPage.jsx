@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { getTrips } from "../services/api.js";
 import { formatBudget, formatDateRange } from "../format.js";
 import StatusBadge from "../components/StatusBadge.jsx";
+import useDocumentTitle from "../useDocumentTitle.js";
 
 export default function TripsPage() {
   const [trips, setTrips] = useState([]);
@@ -10,6 +11,7 @@ export default function TripsPage() {
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  useDocumentTitle("Trips");
 
   useEffect(() => {
     let ignore = false;
