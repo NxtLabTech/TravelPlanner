@@ -12,7 +12,7 @@ export default function App() {
           <Link to="/" className="text-lg font-semibold">
             TravelPlanner
           </Link>
-          <Link to="/trips/new" className="text-sm text-blue-600 hover:underline">
+          <Link to="/trips/new" className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700">
             New trip
           </Link>
         </nav>

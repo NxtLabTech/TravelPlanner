@@ -35,12 +35,7 @@ export default function TripsPage() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Trips</h1>
-        <Link to="/trips/new" className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700">
-          Add Trip
-        </Link>
-      </div>
+      <h1 className="mb-4 text-2xl font-semibold">Trips</h1>
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row">
         <input
@@ -66,7 +61,20 @@ export default function TripsPage() {
 
       {error && <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
       {loading && <p className="text-sm text-gray-500">Loading...</p>}
-      {!loading && !error && trips.length === 0 && <p className="text-gray-500">No trips found.</p>}
+      {!loading && !error && trips.length === 0 && (
+        <p className="text-gray-500">
+          {search || status ? (
+            "No trips found."
+          ) : (
+            <>
+              No trips yet.{" "}
+              <Link to="/trips/new" className="text-blue-600 hover:underline">
+                Plan your first trip
+              </Link>
+            </>
+          )}
+        </p>
+      )}
 
       {trips.length > 0 && (
         <ul className="divide-y divide-gray-200 rounded border border-gray-200 bg-white">
