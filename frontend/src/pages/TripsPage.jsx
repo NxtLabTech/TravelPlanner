@@ -1,17 +1,30 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { getTrips } from "../services/api.js";
 import { formatBudget, formatDateRange } from "../format.js";
 import StatusBadge from "../components/StatusBadge.jsx";
+import Toast from "../components/Toast.jsx";
 import useDocumentTitle from "../useDocumentTitle.js";
 
 export default function TripsPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [trips, setTrips] = useState([]);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  // A message passed by the page we came from, e.g. after deleting a trip.
+  const [message, setMessage] = useState(location.state?.message || "");
+  const dismissMessage = useCallback(() => setMessage(""), []);
   useDocumentTitle("Trips");
+
+  // Clear the message from history so a reload or Back doesn't show it again.
+  useEffect(() => {
+    if (location.state?.message) {
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location, navigate]);
 
   useEffect(() => {
     let ignore = false;
@@ -98,6 +111,8 @@ export default function TripsPage() {
           ))}
         </ul>
       )}
+
+      {message && <Toast message={message} onDismiss={dismissMessage} />}
     </div>
   );
 }

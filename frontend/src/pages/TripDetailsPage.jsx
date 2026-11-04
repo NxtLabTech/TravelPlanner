@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   createActivity,
@@ -12,6 +12,8 @@ import { countDays, formatBudget, formatDateRange, pluralize } from "../format.j
 import StatusBadge from "../components/StatusBadge.jsx";
 import ActivityForm from "../components/ActivityForm.jsx";
 import Itinerary from "../components/Itinerary.jsx";
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
+import Toast from "../components/Toast.jsx";
 import useDocumentTitle from "../useDocumentTitle.js";
 
 export default function TripDetailsPage() {
@@ -22,6 +24,10 @@ export default function TripDetailsPage() {
   const [error, setError] = useState("");
   // null = form hidden, {} = adding a new activity, otherwise the activity being edited
   const [formActivity, setFormActivity] = useState(null);
+  // The delete waiting for confirmation: { title, message, onConfirm }
+  const [confirmation, setConfirmation] = useState(null);
+  // The message shown after a delete: { message, undo }
+  const [toast, setToast] = useState(null);
   useDocumentTitle(trip?.name);
 
   useEffect(() => {
@@ -47,26 +53,54 @@ export default function TripDetailsPage() {
     setFormActivity(null);
   }
 
-  async function handleDeleteActivity(activity) {
-    if (!window.confirm(`Delete "${activity.title}"?`)) return;
-    setError("");
+  function handleDeleteActivity(activity) {
+    setConfirmation({
+      title: "Delete activity?",
+      message: `"${activity.title}" will be removed from the itinerary.`,
+      onConfirm: async () => {
+        setConfirmation(null);
+        setError("");
+        try {
+          await deleteActivity(activity.id);
+          if (formActivity?.id === activity.id) setFormActivity(null);
+          await reloadActivities();
+          setToast({ message: `Deleted "${activity.title}"`, undo: () => restoreActivity(activity) });
+        } catch (err) {
+          setError(err.message);
+        }
+      },
+    });
+  }
+
+  // Undo for a deleted activity: add it again (it gets a new id).
+  async function restoreActivity({ title, date, time, location, notes }) {
+    setToast(null);
     try {
-      await deleteActivity(activity.id);
+      await createActivity(id, { title, date, time, location, notes });
       await reloadActivities();
     } catch (err) {
       setError(err.message);
     }
   }
 
-  async function handleDeleteTrip() {
-    if (!window.confirm(`Delete "${trip.name}" and all its activities?`)) return;
-    try {
-      await deleteTrip(id);
-      navigate("/");
-    } catch (err) {
-      setError(err.message);
-    }
+  function handleDeleteTrip() {
+    setConfirmation({
+      title: "Delete trip?",
+      message: `"${trip.name}" and its ${pluralize(activities.length, "activity", "activities")} will be deleted. This can't be undone.`,
+      onConfirm: async () => {
+        setConfirmation(null);
+        try {
+          await deleteTrip(id);
+          navigate("/", { state: { message: `Deleted "${trip.name}"` } });
+        } catch (err) {
+          setError(err.message);
+        }
+      },
+    });
   }
+
+  const cancelConfirmation = useCallback(() => setConfirmation(null), []);
+  const dismissToast = useCallback(() => setToast(null), []);
 
   // A new activity is added above the itinerary; an existing one is edited in place.
   const isAdding = formActivity !== null && !formActivity.id;
@@ -177,6 +211,18 @@ export default function TripDetailsPage() {
         onEdit={setFormActivity}
         onDelete={handleDeleteActivity}
       />
+
+      {confirmation && (
+        <ConfirmDialog
+          title={confirmation.title}
+          message={confirmation.message}
+          onConfirm={confirmation.onConfirm}
+          onCancel={cancelConfirmation}
+        />
+      )}
+      {toast && (
+        <Toast message={toast.message} actionLabel="Undo" onAction={toast.undo} onDismiss={dismissToast} />
+      )}
     </div>
   );
 }
