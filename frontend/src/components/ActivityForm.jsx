@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { CATEGORIES } from "../categories.js";
 
-const emptyActivity = { title: "", date: "", time: "", location: "", notes: "" };
+const emptyActivity = { title: "", date: "", time: "", location: "", notes: "", cost: "", category: "" };
 
 const inputClass = "mt-1 w-full rounded border border-gray-300 bg-white px-3 py-2";
 
@@ -19,7 +20,7 @@ export default function ActivityForm({ initialActivity = emptyActivity, minDate,
     setError("");
     setSaving(true);
     try {
-      await onSubmit(activity);
+      await onSubmit({ ...activity, cost: activity.cost === "" ? 0 : Number(activity.cost) });
     } catch (err) {
       setError(err.message);
       setSaving(false);
@@ -59,6 +60,32 @@ export default function ActivityForm({ initialActivity = emptyActivity, minDate,
         Location
         <input name="location" value={activity.location} onChange={handleChange} className={inputClass} />
       </label>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="block text-sm font-medium">
+          Category
+          <select name="category" value={activity.category} onChange={handleChange} className={inputClass}>
+            <option value="">None</option>
+            {Object.entries(CATEGORIES).map(([value, { label, icon }]) => (
+              <option key={value} value={value}>
+                {icon} {label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block text-sm font-medium">
+          Cost (₹)
+          <input
+            type="number"
+            name="cost"
+            value={activity.cost}
+            onChange={handleChange}
+            min="0"
+            step="any"
+            className={inputClass}
+          />
+        </label>
+      </div>
 
       <label className="block text-sm font-medium">
         Notes

@@ -7,8 +7,10 @@ A small travel planning app. Create trips, keep an itinerary of activities for e
 ## Features
 
 - Create, view, edit and delete trips
-- Add, edit and delete activities for a trip
-- Itinerary grouped by date
+- Add, edit and delete activities for a trip, with an optional category and cost
+- Track spending against the trip budget
+- Day-by-day itinerary that highlights today and shows days with nothing planned
+- Print a trip or save it as a PDF
 - Search trips by name or destination
 - Filter trips by status: upcoming, ongoing, completed (calculated from the trip dates)
 
@@ -123,7 +125,7 @@ Example trip:
 }
 ```
 
-Example activity (its date must fall within the trip dates; `time` is optional, `HH:MM`):
+Example activity (its date must fall within the trip dates; `time` is optional, `HH:MM`; `cost` is optional and defaults to 0; `category` is optional and one of `food`, `transport`, `stay`, `sightseeing`, `shopping`, `other`):
 
 ```json
 {
@@ -131,9 +133,15 @@ Example activity (its date must fall within the trip dates; `time` is optional, 
   "date": "2026-11-10",
   "time": "10:00",
   "location": "Baga Beach",
-  "notes": "Spend the morning at the beach"
+  "notes": "Spend the morning at the beach",
+  "cost": 500,
+  "category": "sightseeing"
 }
 ```
+
+The trip page adds up activity costs and shows them against the trip budget.
+
+Databases created by an earlier version get the new `cost` and `category` columns automatically on startup; existing data is kept.
 
 ## Running tests
 

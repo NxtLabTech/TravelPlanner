@@ -1,9 +1,11 @@
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { createTrip } from "../services/api.js";
 import TripForm from "../components/TripForm.jsx";
+import useDocumentTitle from "../useDocumentTitle.js";
 
 export default function NewTripPage() {
   const navigate = useNavigate();
+  useDocumentTitle("New trip");
 
   async function handleSubmit(trip) {
     const created = await createTrip(trip);
@@ -11,8 +13,11 @@ export default function NewTripPage() {
   }
 
   return (
-    <div>
-      <h1 className="mb-4 text-2xl font-semibold">New trip</h1>
+    <div className="max-w-2xl">
+      <Link to="/" className="text-sm text-blue-600 hover:underline">
+        ← All trips
+      </Link>
+      <h1 className="mt-3 mb-4 text-2xl font-semibold">New trip</h1>
       <TripForm submitLabel="Create trip" onSubmit={handleSubmit} cancelTo="/" />
     </div>
   );

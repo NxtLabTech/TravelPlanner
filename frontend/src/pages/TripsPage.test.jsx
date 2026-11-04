@@ -37,11 +37,28 @@ describe("TripsPage", () => {
     expect(await screen.findByText("Goa Trip")).toBeInTheDocument();
     expect(screen.getByText("₹20,000")).toBeInTheDocument();
     expect(screen.getByText("upcoming")).toBeInTheDocument();
+    expect(screen.getByText("10 – 14 Nov 2026")).toBeInTheDocument();
   });
 
-  it("shows a message when no trips are found", async () => {
+  it("sets the browser tab title", async () => {
     getTrips.mockResolvedValue([]);
     renderPage();
+    await waitFor(() => expect(document.title).toBe("Trips · TravelPlanner"));
+  });
+
+  it("invites the user to plan a trip when there are none", async () => {
+    getTrips.mockResolvedValue([]);
+    renderPage();
+    expect(await screen.findByRole("link", { name: "Plan your first trip" })).toHaveAttribute(
+      "href",
+      "/trips/new"
+    );
+  });
+
+  it("shows a message when no trips match the filter", async () => {
+    getTrips.mockResolvedValue([]);
+    renderPage();
+    await userEvent.selectOptions(screen.getByLabelText("Filter by status"), "completed");
     expect(await screen.findByText("No trips found.")).toBeInTheDocument();
   });
 

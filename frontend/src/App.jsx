@@ -7,12 +7,12 @@ import TripDetailsPage from "./pages/TripDetailsPage.jsx";
 export default function App() {
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
-      <header className="border-b border-gray-200 bg-white">
+      <header className="border-b border-gray-200 bg-white print:hidden">
         <nav className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
           <Link to="/" className="text-lg font-semibold">
             TravelPlanner
           </Link>
-          <Link to="/trips/new" className="text-sm text-blue-600 hover:underline">
+          <Link to="/trips/new" className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700">
             New trip
           </Link>
         </nav>

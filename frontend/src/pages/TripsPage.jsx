@@ -1,15 +1,30 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { getTrips } from "../services/api.js";
-import { formatBudget, formatDate } from "../format.js";
+import { formatBudget, formatDateRange } from "../format.js";
 import StatusBadge from "../components/StatusBadge.jsx";
+import Toast from "../components/Toast.jsx";
+import useDocumentTitle from "../useDocumentTitle.js";
 
 export default function TripsPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [trips, setTrips] = useState([]);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  // A message passed by the page we came from, e.g. after deleting a trip.
+  const [message, setMessage] = useState(location.state?.message || "");
+  const dismissMessage = useCallback(() => setMessage(""), []);
+  useDocumentTitle("Trips");
+
+  // Clear the message from history so a reload or Back doesn't show it again.
+  useEffect(() => {
+    if (location.state?.message) {
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location, navigate]);
 
   useEffect(() => {
     let ignore = false;
@@ -33,12 +48,7 @@ export default function TripsPage() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Trips</h1>
-        <Link to="/trips/new" className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700">
-          Add Trip
-        </Link>
-      </div>
+      <h1 className="mb-4 text-2xl font-semibold">Trips</h1>
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row">
         <input
@@ -64,7 +74,20 @@ export default function TripsPage() {
 
       {error && <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
       {loading && <p className="text-sm text-gray-500">Loading...</p>}
-      {!loading && !error && trips.length === 0 && <p className="text-gray-500">No trips found.</p>}
+      {!loading && !error && trips.length === 0 && (
+        <p className="text-gray-500">
+          {search || status ? (
+            "No trips found."
+          ) : (
+            <>
+              No trips yet.{" "}
+              <Link to="/trips/new" className="text-blue-600 hover:underline">
+                Plan your first trip
+              </Link>
+            </>
+          )}
+        </p>
+      )}
 
       {trips.length > 0 && (
         <ul className="divide-y divide-gray-200 rounded border border-gray-200 bg-white">
@@ -79,9 +102,7 @@ export default function TripsPage() {
                   <p className="text-sm text-gray-600">{trip.destination}</p>
                 </div>
                 <div className="flex items-center gap-4 text-sm text-gray-600">
-                  <span>
-                    {formatDate(trip.start_date)} – {formatDate(trip.end_date)}
-                  </span>
+                  <span>{formatDateRange(trip.start_date, trip.end_date)}</span>
                   <span>{formatBudget(trip.budget)}</span>
                   <StatusBadge status={trip.status} />
                 </div>
@@ -90,6 +111,8 @@ export default function TripsPage() {
           ))}
         </ul>
       )}
+
+      {message && <Toast message={message} onDismiss={dismissMessage} />}
     </div>
   );
 }

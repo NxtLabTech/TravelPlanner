@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { getTrip, updateTrip } from "../services/api.js";
 import TripForm from "../components/TripForm.jsx";
+import useDocumentTitle from "../useDocumentTitle.js";
 
 export default function EditTripPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [trip, setTrip] = useState(null);
   const [error, setError] = useState("");
+  useDocumentTitle(trip ? `Edit ${trip.name}` : "Edit trip");
 
   useEffect(() => {
     getTrip(id).then(setTrip).catch((err) => setError(err.message));
@@ -22,8 +24,11 @@ export default function EditTripPage() {
   if (!trip) return <p className="text-sm text-gray-500">Loading...</p>;
 
   return (
-    <div>
-      <h1 className="mb-4 text-2xl font-semibold">Edit trip</h1>
+    <div className="max-w-2xl">
+      <Link to={`/trips/${id}`} className="text-sm text-blue-600 hover:underline">
+        ← Back to trip
+      </Link>
+      <h1 className="mt-3 mb-4 text-2xl font-semibold">Edit trip</h1>
       <TripForm
         initialTrip={trip}
         submitLabel="Save changes"
