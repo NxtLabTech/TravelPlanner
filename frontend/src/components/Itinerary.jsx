@@ -1,4 +1,5 @@
-import { formatDayHeading, listDates, todayIsoDate } from "../format.js";
+import { formatBudget, formatDayHeading, listDates, todayIsoDate } from "../format.js";
+import { CATEGORIES } from "../categories.js";
 
 function mapsUrl(location) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
@@ -45,11 +46,17 @@ function SectionHeading({ section }) {
 }
 
 function ActivityItem({ activity, onEdit, onDelete }) {
+  const category = CATEGORIES[activity.category];
   return (
     <li className="flex items-start justify-between gap-4 p-3">
       <div>
         <p className="font-medium">
           {activity.time && <span className="mr-2 text-gray-500">{activity.time}</span>}
+          {category && (
+            <span className="mr-1.5" role="img" aria-label={category.label} title={category.label}>
+              {category.icon}
+            </span>
+          )}
           {activity.title}
         </p>
         {activity.location && (
@@ -64,7 +71,8 @@ function ActivityItem({ activity, onEdit, onDelete }) {
         )}
         {activity.notes && <p className="text-sm text-gray-500">{activity.notes}</p>}
       </div>
-      <div className="flex shrink-0 gap-3 text-sm">
+      <div className="flex shrink-0 items-start gap-3 text-sm">
+        {activity.cost > 0 && <span className="text-gray-700">{formatBudget(activity.cost)}</span>}
         <button
           onClick={() => onEdit(activity)}
           aria-label={`Edit ${activity.title}`}

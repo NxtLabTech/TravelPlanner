@@ -34,6 +34,8 @@ const beach = {
   time: "10:00",
   location: "Baga",
   notes: "Bring sunscreen",
+  cost: 500,
+  category: "sightseeing",
 };
 
 function renderPage() {
@@ -58,6 +60,7 @@ describe("TripDetailsPage", () => {
     renderPage();
     expect(await screen.findByText("10 – 14 Nov 2026")).toBeInTheDocument();
     expect(screen.getByText("5 days · 1 activity")).toBeInTheDocument();
+    expect(screen.getByText("₹500 of ₹20,000 spent")).toBeInTheDocument();
     expect(document.title).toBe("Goa Trip · TravelPlanner");
   });
 
@@ -91,6 +94,8 @@ describe("TripDetailsPage", () => {
       time: "10:00",
       location: "Baga",
       notes: "Bring sunscreen",
+      cost: 500,
+      category: "sightseeing",
     });
     expect(await screen.findByRole("button", { name: "Delete Beach" })).toBeInTheDocument();
     expect(screen.queryByText('Deleted "Beach"')).not.toBeInTheDocument();

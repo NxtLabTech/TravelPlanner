@@ -8,7 +8,8 @@ import {
   getTrip,
   updateActivity,
 } from "../services/api.js";
-import { countDays, formatBudget, formatDateRange, pluralize } from "../format.js";
+import { countDays, formatDateRange, pluralize } from "../format.js";
+import BudgetSummary from "../components/BudgetSummary.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import ActivityForm from "../components/ActivityForm.jsx";
 import Itinerary from "../components/Itinerary.jsx";
@@ -73,10 +74,10 @@ export default function TripDetailsPage() {
   }
 
   // Undo for a deleted activity: add it again (it gets a new id).
-  async function restoreActivity({ title, date, time, location, notes }) {
+  async function restoreActivity({ title, date, time, location, notes, cost, category }) {
     setToast(null);
     try {
-      await createActivity(id, { title, date, time, location, notes });
+      await createActivity(id, { title, date, time, location, notes, cost, category });
       await reloadActivities();
     } catch (err) {
       setError(err.message);
@@ -178,7 +179,9 @@ export default function TripDetailsPage() {
         </div>
         <div>
           <dt className="text-gray-500">Budget</dt>
-          <dd className="mt-1">{formatBudget(trip.budget)}</dd>
+          <dd className="mt-1">
+            <BudgetSummary budget={Number(trip.budget)} activities={activities} />
+          </dd>
         </div>
         {trip.description && (
           <div className="sm:col-span-4">

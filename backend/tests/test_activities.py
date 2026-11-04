@@ -31,7 +31,27 @@ def test_create_activity_with_only_required_fields(client, trip):
     data = {"title": "Free day", "date": "2026-11-12"}
     response = client.post(f"/api/trips/{trip['id']}/activities", json=data)
     assert response.status_code == 201
-    assert response.get_json()["location"] == ""
+    activity = response.get_json()
+    assert activity["location"] == ""
+    assert activity["cost"] == 0
+    assert activity["category"] == ""
+
+
+def test_create_activity_with_cost_and_category(client, trip):
+    url = f"/api/trips/{trip['id']}/activities"
+    response = client.post(url, json=activity_data(cost=450.5, category=" Food "))
+    assert response.status_code == 201
+    activity = response.get_json()
+    assert activity["cost"] == 450.5
+    assert activity["category"] == "food"
+
+
+def test_update_activity_cost_and_category(client, activity):
+    url = f"/api/activities/{activity['id']}"
+    response = client.put(url, json=activity_data(cost=1200, category="stay"))
+    assert response.status_code == 200
+    assert response.get_json()["cost"] == 1200
+    assert response.get_json()["category"] == "stay"
 
 
 def test_get_activities_sorted_by_date_and_time(client, trip):
@@ -95,6 +115,10 @@ def test_invalid_activity_id(client):
     ({"date": "2026-11-09"}, "Activity date must be within the trip dates"),
     ({"date": "2026-11-15"}, "Activity date must be within the trip dates"),
     ({"time": "25:00"}, "Time must be in HH:MM format"),
+    ({"cost": -5}, "Cost cannot be negative"),
+    ({"cost": "cheap"}, "Cost must be a number"),
+    ({"cost": 10**13}, "Cost is too large"),
+    ({"category": "party"}, "Category must be one of: food, transport, stay, sightseeing, shopping, other"),
 ])
 def test_create_activity_invalid_data(client, trip, changes, message):
     response = client.post(f"/api/trips/{trip['id']}/activities", json=activity_data(**changes))

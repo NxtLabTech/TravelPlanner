@@ -36,8 +36,8 @@ def create_activity(trip_id):
 
     db = get_db()
     cursor = db.execute(
-        """INSERT INTO activities (trip_id, title, date, time, location, notes)
-           VALUES (:trip_id, :title, :date, :time, :location, :notes)""",
+        """INSERT INTO activities (trip_id, title, date, time, location, notes, cost, category)
+           VALUES (:trip_id, :title, :date, :time, :location, :notes, :cost, :category)""",
         {**activity, "trip_id": trip_id},
     )
     db.commit()
@@ -61,7 +61,8 @@ def update_activity(activity_id):
     db = get_db()
     db.execute(
         """UPDATE activities SET title = :title, date = :date, time = :time,
-           location = :location, notes = :notes WHERE id = :id""",
+           location = :location, notes = :notes, cost = :cost, category = :category
+           WHERE id = :id""",
         {**activity, "id": activity_id},
     )
     db.commit()

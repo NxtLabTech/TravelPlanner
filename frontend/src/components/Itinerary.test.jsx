@@ -76,6 +76,12 @@ describe("Itinerary", () => {
     expect(screen.getByRole("button", { name: "Edit Beach" })).toBeInTheDocument();
   });
 
+  it("shows the category and cost of an activity", () => {
+    renderItinerary({ activities: [{ ...activities[1], category: "food", cost: 1200 }] });
+    expect(screen.getByRole("img", { name: "Food" })).toHaveTextContent("🍽️");
+    expect(screen.getByText("₹1,200")).toBeInTheDocument();
+  });
+
   it("links the location to a map search", () => {
     renderItinerary({
       activities: [{ ...activities[0], location: "Hyderabad, Telangana" }],

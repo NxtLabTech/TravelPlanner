@@ -21,11 +21,22 @@ CREATE TABLE IF NOT EXISTS activities (
     date TEXT NOT NULL,
     time TEXT NOT NULL DEFAULT '',
     location TEXT NOT NULL DEFAULT '',
-    notes TEXT NOT NULL DEFAULT ''
+    notes TEXT NOT NULL DEFAULT '',
+    cost NUMERIC NOT NULL DEFAULT 0,
+    category TEXT NOT NULL DEFAULT ''
 );
 
 CREATE INDEX IF NOT EXISTS idx_activities_trip_id ON activities(trip_id);
 """
+
+# Columns added after the first release. Databases created before them
+# get the columns on startup, so existing data is kept.
+ADDED_COLUMNS = {
+    "activities": {
+        "cost": "NUMERIC NOT NULL DEFAULT 0",
+        "category": "TEXT NOT NULL DEFAULT ''",
+    },
+}
 
 
 def get_db():
@@ -45,4 +56,10 @@ def close_db(error=None):
 def init_db(path):
     db = sqlite3.connect(path)
     db.executescript(SCHEMA)
+    for table, columns in ADDED_COLUMNS.items():
+        existing = {row[1] for row in db.execute(f"PRAGMA table_info({table})")}
+        for name, definition in columns.items():
+            if name not in existing:
+                db.execute(f"ALTER TABLE {table} ADD COLUMN {name} {definition}")
+    db.commit()
     db.close()
