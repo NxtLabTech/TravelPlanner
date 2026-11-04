@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import DestinationMap from "../components/DestinationMap.jsx";
 import {
   createActivity,
   deleteActivity,
@@ -122,13 +123,20 @@ export default function TripDetailsPage() {
           <dt className="text-gray-500">Budget</dt>
           <dd className="mt-1">{formatBudget(trip.budget)}</dd>
         </div>
-        {trip.description && (
+                {trip.description && (
           <div className="sm:col-span-4">
             <dt className="text-gray-500">Description</dt>
             <dd className="mt-1">{trip.description}</dd>
           </div>
         )}
       </dl>
+
+      {trip.destination && (
+        <div className="mt-6">
+          <h2 className="mb-3 text-xl font-semibold">Map</h2>
+          <DestinationMap destination={trip.destination} />
+        </div>
+      )}
 
       <div className="mt-8 mb-3 flex items-center justify-between">
         <h2 className="text-xl font-semibold">Itinerary</h2>
