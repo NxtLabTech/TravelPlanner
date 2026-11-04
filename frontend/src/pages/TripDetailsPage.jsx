@@ -68,6 +68,23 @@ export default function TripDetailsPage() {
     }
   }
 
+  // A new activity is added above the itinerary; an existing one is edited in place.
+  const isAdding = formActivity !== null && !formActivity.id;
+
+  function renderActivityForm(activity) {
+    return (
+      <ActivityForm
+        key={activity.id || "new"}
+        initialActivity={activity.id ? activity : undefined}
+        minDate={trip.start_date}
+        maxDate={trip.end_date}
+        submitLabel={activity.id ? "Save activity" : "Add activity"}
+        onSubmit={handleSaveActivity}
+        onCancel={() => setFormActivity(null)}
+      />
+    );
+  }
+
   if (!trip) {
     return error ? (
       <div>
@@ -139,7 +156,7 @@ export default function TripDetailsPage() {
 
       <div className="mt-8 mb-3 flex items-center justify-between">
         <h2 className="text-xl font-semibold">Itinerary</h2>
-        {!formActivity && (
+        {!isAdding && (
           <button
             onClick={() => setFormActivity({})}
             className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
@@ -149,24 +166,14 @@ export default function TripDetailsPage() {
         )}
       </div>
 
-      {formActivity && (
-        <div className="mb-5">
-          <ActivityForm
-            key={formActivity.id || "new"}
-            initialActivity={formActivity.id ? formActivity : undefined}
-            minDate={trip.start_date}
-            maxDate={trip.end_date}
-            submitLabel={formActivity.id ? "Save activity" : "Add activity"}
-            onSubmit={handleSaveActivity}
-            onCancel={() => setFormActivity(null)}
-          />
-        </div>
-      )}
+      {isAdding && <div className="mb-5">{renderActivityForm(formActivity)}</div>}
 
       <Itinerary
         startDate={trip.start_date}
         endDate={trip.end_date}
         activities={activities}
+        editingId={formActivity?.id}
+        renderEditForm={renderActivityForm}
         onEdit={setFormActivity}
         onDelete={handleDeleteActivity}
       />

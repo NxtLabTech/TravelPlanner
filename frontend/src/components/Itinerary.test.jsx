@@ -69,6 +69,13 @@ describe("Itinerary", () => {
     expect(onDelete).toHaveBeenCalledWith(activities[1]);
   });
 
+  it("shows the edit form in place of the activity being edited", () => {
+    renderItinerary({ editingId: 2, renderEditForm: (activity) => <p>Editing {activity.title}</p> });
+    expect(screen.getByText("Editing Dinner")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Edit Dinner" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Edit Beach" })).toBeInTheDocument();
+  });
+
   it("links the location to a map search", () => {
     renderItinerary({
       activities: [{ ...activities[0], location: "Hyderabad, Telangana" }],

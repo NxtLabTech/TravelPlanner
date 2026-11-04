@@ -44,8 +44,58 @@ function SectionHeading({ section }) {
   );
 }
 
+function ActivityItem({ activity, onEdit, onDelete }) {
+  return (
+    <li className="flex items-start justify-between gap-4 p-3">
+      <div>
+        <p className="font-medium">
+          {activity.time && <span className="mr-2 text-gray-500">{activity.time}</span>}
+          {activity.title}
+        </p>
+        {activity.location && (
+          <a
+            href={mapsUrl(activity.location)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block text-sm text-gray-600 hover:text-blue-600 hover:underline"
+          >
+            {activity.location}
+          </a>
+        )}
+        {activity.notes && <p className="text-sm text-gray-500">{activity.notes}</p>}
+      </div>
+      <div className="flex shrink-0 gap-3 text-sm">
+        <button
+          onClick={() => onEdit(activity)}
+          aria-label={`Edit ${activity.title}`}
+          className="text-blue-600 hover:underline"
+        >
+          Edit
+        </button>
+        <button
+          onClick={() => onDelete(activity)}
+          aria-label={`Delete ${activity.title}`}
+          className="text-red-600 hover:underline"
+        >
+          Delete
+        </button>
+      </div>
+    </li>
+  );
+}
+
 // startDate / endDate are the trip's dates. Activities arrive sorted by date and time.
-export default function Itinerary({ startDate, endDate, activities, today = todayIsoDate(), onEdit, onDelete }) {
+// The activity whose id is editingId is replaced by renderEditForm(activity).
+export default function Itinerary({
+  startDate,
+  endDate,
+  activities,
+  today = todayIsoDate(),
+  editingId,
+  renderEditForm,
+  onEdit,
+  onDelete,
+}) {
   return (
     <div className="space-y-5">
       {buildSections(startDate, endDate, activities, today).map((section) => (
@@ -65,43 +115,15 @@ export default function Itinerary({ startDate, endDate, activities, today = toda
                 section.isToday ? "border-green-300" : "border-gray-200"
               }`}
             >
-              {section.firstDay.activities.map((activity) => (
-                <li key={activity.id} className="flex items-start justify-between gap-4 p-3">
-                  <div>
-                    <p className="font-medium">
-                      {activity.time && <span className="mr-2 text-gray-500">{activity.time}</span>}
-                      {activity.title}
-                    </p>
-                    {activity.location && (
-                      <a
-                        href={mapsUrl(activity.location)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block text-sm text-gray-600 hover:text-blue-600 hover:underline"
-                      >
-                        {activity.location}
-                      </a>
-                    )}
-                    {activity.notes && <p className="text-sm text-gray-500">{activity.notes}</p>}
-                  </div>
-                  <div className="flex shrink-0 gap-3 text-sm">
-                    <button
-                      onClick={() => onEdit(activity)}
-                      aria-label={`Edit ${activity.title}`}
-                      className="text-blue-600 hover:underline"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => onDelete(activity)}
-                      aria-label={`Delete ${activity.title}`}
-                      className="text-red-600 hover:underline"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </li>
-              ))}
+              {section.firstDay.activities.map((activity) =>
+                activity.id === editingId ? (
+                  <li key={activity.id} className="bg-gray-50 p-2">
+                    {renderEditForm(activity)}
+                  </li>
+                ) : (
+                  <ActivityItem key={activity.id} activity={activity} onEdit={onEdit} onDelete={onDelete} />
+                )
+              )}
             </ul>
           )}
         </section>
