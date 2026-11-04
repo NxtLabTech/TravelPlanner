@@ -11,8 +11,13 @@ export default function NewTripPage() {
   }
 
   return (
-    <div>
-      <h1 className="mb-4 text-2xl font-semibold">New trip</h1>
+    <div className="max-w-2xl mx-auto py-2">
+      <div className="mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">New trip</h1>
+        <p className="text-sm text-slate-500 mt-1">
+          Specify destination, travel dates, and optional budget to start planning.
+        </p>
+      </div>
       <TripForm submitLabel="Create trip" onSubmit={handleSubmit} cancelTo="/" />
     </div>
   );
