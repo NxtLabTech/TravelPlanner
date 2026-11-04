@@ -4,17 +4,27 @@ import { getTrips } from "../services/api.js";
 import { formatBudget, formatDate } from "../format.js";
 import StatusBadge from "../components/StatusBadge.jsx";
 
+// Wait for a pause in typing before searching, so each keystroke
+// doesn't send its own request.
+const SEARCH_DELAY_MS = 300;
+
 export default function TripsPage() {
   const [trips, setTrips] = useState([]);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), SEARCH_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
     let ignore = false;
     setLoading(true);
-    getTrips({ search, status })
+    getTrips({ search: debouncedSearch, status })
       .then((data) => {
         if (ignore) return;
         setTrips(data);
@@ -29,7 +39,7 @@ export default function TripsPage() {
     return () => {
       ignore = true;
     };
-  }, [search, status]);
+  }, [debouncedSearch, status]);
 
   return (
     <div>

@@ -60,4 +60,16 @@ describe("TripsPage", () => {
 
     await waitFor(() => expect(getTrips).toHaveBeenLastCalledWith({ search: "goa", status: "ongoing" }));
   });
+
+  it("waits for typing to pause before searching", async () => {
+    getTrips.mockResolvedValue([]);
+    renderPage();
+
+    await userEvent.type(screen.getByLabelText("Search trips"), "goa");
+    await waitFor(() => expect(getTrips).toHaveBeenLastCalledWith({ search: "goa", status: "" }));
+
+    const searches = getTrips.mock.calls.map(([params]) => params.search);
+    expect(searches).not.toContain("g");
+    expect(searches).not.toContain("go");
+  });
 });
