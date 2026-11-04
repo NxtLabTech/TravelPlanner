@@ -49,3 +49,38 @@ export function updateActivity(id, activity) {
 export function deleteActivity(id) {
   return request("DELETE", `/api/activities/${id}`);
 }
+
+export function getDocuments(tripId) {
+  return request("GET", `/api/trips/${tripId}/documents`);
+}
+
+export async function uploadDocument(tripId, { file, docType, name }) {
+  const formData = new FormData();
+  formData.append("file", file);
+  if (docType) {
+    formData.append("doc_type", docType);
+  }
+  if (name && name.trim()) {
+    formData.append("name", name.trim());
+  }
+  const response = await fetch(`/api/trips/${tripId}/documents`, {
+    method: "POST",
+    body: formData,
+    // Content-Type is intentionally omitted so the browser sets the
+    // multipart boundary automatically.
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(data?.error || "Upload failed");
+  }
+  return data;
+}
+
+export function downloadDocument(docId) {
+  // Let the browser handle the Content-Disposition attachment directly.
+  window.open(`/api/documents/${docId}/download`, "_blank", "noopener");
+}
+
+export function deleteDocument(docId) {
+  return request("DELETE", `/api/documents/${docId}`);
+}

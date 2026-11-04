@@ -5,7 +5,10 @@ from app import create_app
 
 @pytest.fixture
 def client(tmp_path):
-    app = create_app(str(tmp_path / "test.db"))
+    app = create_app(
+        database_path=str(tmp_path / "test.db"),
+        upload_folder=str(tmp_path / "uploads"),
+    )
     return app.test_client()
 
 

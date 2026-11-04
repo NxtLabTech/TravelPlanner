@@ -1,4 +1,6 @@
-from flask import Blueprint, jsonify, request
+import os
+
+from flask import Blueprint, current_app, jsonify, request
 
 from database import get_db
 from models import TRIP_STATUSES, find_trip, trip_to_dict
@@ -94,7 +96,24 @@ def delete_trip(trip_id):
     if find_trip(trip_id) is None:
         return jsonify(error="Trip not found"), 404
 
+    # Collect document stored_names before the CASCADE removes the rows.
+    upload_folder = current_app.config["UPLOAD_FOLDER"]
+    doc_rows = get_db().execute(
+        "SELECT stored_name FROM documents WHERE trip_id = ?", (trip_id,)
+    ).fetchall()
+    stored_names = [row["stored_name"] for row in doc_rows]
+
     db = get_db()
     db.execute("DELETE FROM trips WHERE id = ?", (trip_id,))
     db.commit()
+
+    # Remove physical files after the transaction commits – failures are logged
+    # but do not affect the response; the database state is already correct.
+    for stored_name in stored_names:
+        path = os.path.join(upload_folder, stored_name)
+        try:
+            os.remove(path)
+        except OSError:
+            current_app.logger.warning("Could not remove document file %s", path)
+
     return jsonify(message="Trip deleted")

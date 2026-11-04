@@ -11,6 +11,7 @@ A small travel planning app. Create trips, keep an itinerary of activities for e
 - Itinerary grouped by date
 - Search trips by name or destination
 - Filter trips by status: upcoming, ongoing, completed (calculated from the trip dates)
+- Attach and manage trip documents (e.g. flight tickets, hotel bookings, insurance)
 
 ## Tech stack
 
@@ -30,12 +31,13 @@ TravelPlanner/
 │   ├── validation.py     # Request validation
 │   ├── routes/
 │   │   ├── trips.py
-│   │   └── activities.py
+│   │   ├── activities.py
+│   │   └── documents.py
 │   ├── tests/
 │   └── requirements.txt
 ├── frontend/
 │   └── src/
-│       ├── components/   # TripForm, ActivityForm, Itinerary, StatusBadge
+│       ├── components/   # TripForm, ActivityForm, Itinerary, StatusBadge, DocumentsSection
 │       ├── pages/        # Trips list, new/edit trip, trip details
 │       ├── services/     # api.js (calls to the Flask API)
 │       ├── App.jsx
@@ -107,6 +109,15 @@ Activities
 | POST | `/api/trips/<trip_id>/activities` | Add an activity |
 | PUT | `/api/activities/<id>` | Update an activity |
 | DELETE | `/api/activities/<id>` | Delete an activity |
+
+Documents
+
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| GET | `/api/trips/<trip_id>/documents` | List a trip's documents |
+| POST | `/api/trips/<trip_id>/documents` | Upload a document (`multipart/form-data`: `file`, required `doc_type`, optional `name`) |
+| GET | `/api/documents/<id>/download` | Download a document file with safe attachment filename |
+| DELETE | `/api/documents/<id>` | Delete a document and its stored file |
 
 Errors are returned as JSON, for example `{"error": "End date cannot be before start date"}`, with status 400 (invalid input), 404 (not found) or 500 (server error).
 
