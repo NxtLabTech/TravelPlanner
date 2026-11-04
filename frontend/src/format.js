@@ -5,6 +5,36 @@ function parseDate(isoDate) {
   return new Date(year, month - 1, day);
 }
 
+function toIsoDate(date) {
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
+// Today in the browser's timezone, as "YYYY-MM-DD".
+export function todayIsoDate() {
+  return toIsoDate(new Date());
+}
+
+// Every date from startDate to endDate, both included.
+export function listDates(startDate, endDate) {
+  const dates = [];
+  const end = parseDate(endDate);
+  for (let day = parseDate(startDate); day <= end; day.setDate(day.getDate() + 1)) {
+    dates.push(toIsoDate(day));
+  }
+  return dates;
+}
+
+// "Wed, 4 Nov". Built from parts because browsers disagree on whether
+// en-GB puts a comma after the weekday.
+export function formatDayHeading(isoDate) {
+  const date = parseDate(isoDate);
+  const weekday = date.toLocaleDateString("en-GB", { weekday: "short" });
+  const dayAndMonth = date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  return `${weekday}, ${dayAndMonth}`;
+}
+
 export function formatDate(isoDate) {
   return parseDate(isoDate).toLocaleDateString("en-GB", {
     day: "numeric",

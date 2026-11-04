@@ -1,5 +1,31 @@
 import { describe, expect, it } from "vitest";
-import { countDays, formatBudget, formatDate, formatDateRange, pluralize } from "./format.js";
+import {
+  countDays,
+  formatBudget,
+  formatDate,
+  formatDateRange,
+  formatDayHeading,
+  listDates,
+  pluralize,
+} from "./format.js";
+
+describe("listDates", () => {
+  it("lists every day of the range, across month ends", () => {
+    expect(listDates("2026-11-04", "2026-11-04")).toEqual(["2026-11-04"]);
+    expect(listDates("2026-11-29", "2026-12-02")).toEqual([
+      "2026-11-29",
+      "2026-11-30",
+      "2026-12-01",
+      "2026-12-02",
+    ]);
+  });
+});
+
+describe("formatDayHeading", () => {
+  it("shows the weekday, day and month", () => {
+    expect(formatDayHeading("2026-11-04")).toBe("Wed, 4 Nov");
+  });
+});
 
 describe("formatDate", () => {
   it("formats an ISO date without shifting the day", () => {

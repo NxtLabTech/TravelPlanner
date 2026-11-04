@@ -163,7 +163,13 @@ export default function TripDetailsPage() {
         </div>
       )}
 
-      <Itinerary activities={activities} onEdit={setFormActivity} onDelete={handleDeleteActivity} />
+      <Itinerary
+        startDate={trip.start_date}
+        endDate={trip.end_date}
+        activities={activities}
+        onEdit={setFormActivity}
+        onDelete={handleDeleteActivity}
+      />
     </div>
   );
 }
