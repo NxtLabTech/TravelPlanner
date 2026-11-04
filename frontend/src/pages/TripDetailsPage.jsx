@@ -12,6 +12,7 @@ import { formatBudget, formatDate } from "../format.js";
 import StatusBadge from "../components/StatusBadge.jsx";
 import ActivityForm from "../components/ActivityForm.jsx";
 import Itinerary from "../components/Itinerary.jsx";
+import BudgetSplitter from "../components/BudgetSplitter.jsx";
 
 export default function TripDetailsPage() {
   const { id } = useParams();
@@ -129,6 +130,8 @@ export default function TripDetailsPage() {
           </div>
         )}
       </dl>
+
+      <BudgetSplitter budget={trip.budget} />
 
       <div className="mt-8 mb-3 flex items-center justify-between">
         <h2 className="text-xl font-semibold">Itinerary</h2>

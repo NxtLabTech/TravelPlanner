@@ -8,6 +8,7 @@ A small travel planning app. Create trips, keep an itinerary of activities for e
 
 - Create, view, edit and delete trips
 - Add, edit and delete activities for a trip
+- Split a trip budget evenly among friends
 - Itinerary grouped by date
 - Search trips by name or destination
 - Filter trips by status: upcoming, ongoing, completed (calculated from the trip dates)
