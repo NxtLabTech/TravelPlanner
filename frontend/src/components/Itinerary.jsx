@@ -1,5 +1,9 @@
 import { formatDayHeading, listDates, todayIsoDate } from "../format.js";
 
+function mapsUrl(location) {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
+}
+
 // Splits the trip into days. Days that have activities (and today) get a
 // section of their own; runs of consecutive empty days are merged into one
 // "Nothing planned" section so long trips stay short.
@@ -68,14 +72,31 @@ export default function Itinerary({ startDate, endDate, activities, today = toda
                       {activity.time && <span className="mr-2 text-gray-500">{activity.time}</span>}
                       {activity.title}
                     </p>
-                    {activity.location && <p className="text-sm text-gray-600">{activity.location}</p>}
+                    {activity.location && (
+                      <a
+                        href={mapsUrl(activity.location)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block text-sm text-gray-600 hover:text-blue-600 hover:underline"
+                      >
+                        {activity.location}
+                      </a>
+                    )}
                     {activity.notes && <p className="text-sm text-gray-500">{activity.notes}</p>}
                   </div>
                   <div className="flex shrink-0 gap-3 text-sm">
-                    <button onClick={() => onEdit(activity)} className="text-blue-600 hover:underline">
+                    <button
+                      onClick={() => onEdit(activity)}
+                      aria-label={`Edit ${activity.title}`}
+                      className="text-blue-600 hover:underline"
+                    >
                       Edit
                     </button>
-                    <button onClick={() => onDelete(activity)} className="text-red-600 hover:underline">
+                    <button
+                      onClick={() => onDelete(activity)}
+                      aria-label={`Delete ${activity.title}`}
+                      className="text-red-600 hover:underline"
+                    >
                       Delete
                     </button>
                   </div>

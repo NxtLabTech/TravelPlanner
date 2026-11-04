@@ -62,10 +62,22 @@ describe("Itinerary", () => {
     const onDelete = vi.fn();
     renderItinerary({ onEdit, onDelete });
 
-    await userEvent.click(screen.getAllByText("Edit")[0]);
-    await userEvent.click(screen.getAllByText("Delete")[1]);
+    await userEvent.click(screen.getByRole("button", { name: "Edit Beach" }));
+    await userEvent.click(screen.getByRole("button", { name: "Delete Dinner" }));
 
     expect(onEdit).toHaveBeenCalledWith(activities[0]);
     expect(onDelete).toHaveBeenCalledWith(activities[1]);
+  });
+
+  it("links the location to a map search", () => {
+    renderItinerary({
+      activities: [{ ...activities[0], location: "Hyderabad, Telangana" }],
+    });
+    const link = screen.getByRole("link", { name: "Hyderabad, Telangana" });
+    expect(link).toHaveAttribute(
+      "href",
+      "https://www.google.com/maps/search/?api=1&query=Hyderabad%2C%20Telangana"
+    );
+    expect(link).toHaveAttribute("target", "_blank");
   });
 });
