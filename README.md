@@ -2,13 +2,14 @@
 
 A simple travel planning application built with React and Flask.
 
-A small travel planning app. Create trips, keep an itinerary of activities for each one, and search or filter your trips by status.
+A small travel planning app. Create trips, keep an itinerary of activities and a list of expenses for each one, and search or filter your trips by status.
 
 ## Features
 
 - Create, view, edit and delete trips
 - Add, edit and delete activities for a trip
 - Itinerary grouped by date
+- Add, edit and delete expenses for a trip
 - Search trips by name or destination
 - Filter trips by status: upcoming, ongoing, completed (calculated from the trip dates)
 
@@ -30,12 +31,13 @@ TravelPlanner/
 │   ├── validation.py     # Request validation
 │   ├── routes/
 │   │   ├── trips.py
-│   │   └── activities.py
+│   │   ├── activities.py
+│   │   └── expenses.py
 │   ├── tests/
 │   └── requirements.txt
 ├── frontend/
 │   └── src/
-│       ├── components/   # TripForm, ActivityForm, Itinerary, StatusBadge
+│       ├── components/   # TripForm, ActivityForm, Itinerary, Expenses, StatusBadge
 │       ├── pages/        # Trips list, new/edit trip, trip details
 │       ├── services/     # api.js (calls to the Flask API)
 │       ├── App.jsx
@@ -97,7 +99,7 @@ Trips
 | POST | `/api/trips` | Create a trip |
 | GET | `/api/trips/<id>` | Get a trip |
 | PUT | `/api/trips/<id>` | Update a trip (send all fields). Rejected with 400 if its activities would fall outside the new dates |
-| DELETE | `/api/trips/<id>` | Delete a trip and its activities |
+| DELETE | `/api/trips/<id>` | Delete a trip and its activities and expenses |
 
 Activities
 
@@ -107,6 +109,15 @@ Activities
 | POST | `/api/trips/<trip_id>/activities` | Add an activity |
 | PUT | `/api/activities/<id>` | Update an activity |
 | DELETE | `/api/activities/<id>` | Delete an activity |
+
+Expenses
+
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| GET | `/api/trips/<trip_id>/expenses` | List a trip's expenses, ordered by date |
+| POST | `/api/trips/<trip_id>/expenses` | Add an expense |
+| PUT | `/api/expenses/<id>` | Update an expense |
+| DELETE | `/api/expenses/<id>` | Delete an expense |
 
 Errors are returned as JSON, for example `{"error": "End date cannot be before start date"}`, with status 400 (invalid input), 404 (not found) or 500 (server error).
 
@@ -132,6 +143,18 @@ Example activity (its date must fall within the trip dates; `time` is optional, 
   "time": "10:00",
   "location": "Baga Beach",
   "notes": "Spend the morning at the beach"
+}
+```
+
+Example expense (`amount` must be greater than zero; `category` is one of `accommodation`, `transport`, `food`, `sightseeing`, `shopping`, `other`; `notes` is optional). The date is not limited to the trip dates, so bookings paid in advance can be recorded:
+
+```json
+{
+  "title": "Taxi",
+  "amount": 800,
+  "category": "transport",
+  "date": "2026-11-10",
+  "notes": "Airport to hotel"
 }
 ```
 

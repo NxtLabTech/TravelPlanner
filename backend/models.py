@@ -26,3 +26,7 @@ def find_trip(trip_id):
 
 def find_activity(activity_id):
     return get_db().execute("SELECT * FROM activities WHERE id = ?", (activity_id,)).fetchone()
+
+
+def find_expense(expense_id):
+    return get_db().execute("SELECT * FROM expenses WHERE id = ?", (expense_id,)).fetchone()

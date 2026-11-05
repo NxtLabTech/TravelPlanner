@@ -12,6 +12,7 @@ import { formatBudget, formatDate } from "../format.js";
 import StatusBadge from "../components/StatusBadge.jsx";
 import ActivityForm from "../components/ActivityForm.jsx";
 import Itinerary from "../components/Itinerary.jsx";
+import Expenses from "../components/Expenses.jsx";
 
 export default function TripDetailsPage() {
   const { id } = useParams();
@@ -157,6 +158,8 @@ export default function TripDetailsPage() {
       )}
 
       <Itinerary activities={activities} onEdit={setFormActivity} onDelete={handleDeleteActivity} />
+
+      <Expenses tripId={id} />
     </div>
   );
 }
