@@ -6,6 +6,7 @@ from werkzeug.exceptions import HTTPException
 
 from database import close_db, init_db
 from routes.activities import bp as activities_bp
+from routes.expenses import bp as expenses_bp
 from routes.trips import bp as trips_bp
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -21,6 +22,7 @@ def create_app(database_path=None):
     app.teardown_appcontext(close_db)
     app.register_blueprint(trips_bp)
     app.register_blueprint(activities_bp)
+    app.register_blueprint(expenses_bp)
 
     @app.errorhandler(HTTPException)
     def handle_http_error(error):

@@ -8,6 +8,8 @@ from datetime import datetime
 MAX_ID = 2**63 - 1  # largest integer SQLite can store
 MAX_BUDGET = 10**12
 
+EXPENSE_CATEGORIES = ("accommodation", "transport", "food", "sightseeing", "shopping", "other")
+
 
 def parse_id(value):
     if not (value.isascii() and value.isdigit()):
@@ -21,6 +23,10 @@ def parse_date(value):
         return datetime.strptime(value, "%Y-%m-%d").date()
     except (TypeError, ValueError):
         return None
+
+
+def is_number(value):
+    return not isinstance(value, bool) and isinstance(value, (int, float)) and math.isfinite(value)
 
 
 def clean_text(data, key):
@@ -60,7 +66,7 @@ def validate_trip(data):
     budget = data.get("budget")
     if budget in (None, ""):
         budget = 0
-    if isinstance(budget, bool) or not isinstance(budget, (int, float)) or not math.isfinite(budget):
+    if not is_number(budget):
         return None, "Budget must be a number"
     if budget < 0:
         return None, "Budget cannot be negative"
@@ -107,3 +113,41 @@ def validate_activity(data, trip):
         "notes": clean_text(data, "notes"),
     }
     return activity, None
+
+
+def validate_expense(data):
+    if not isinstance(data, dict):
+        return None, "Request body must be a JSON object"
+
+    title = clean_text(data, "title")
+    if not title:
+        return None, "Title is required"
+
+    amount = data.get("amount")
+    if amount in (None, ""):
+        return None, "Amount is required"
+    if not is_number(amount):
+        return None, "Amount must be a number"
+    if amount <= 0:
+        return None, "Amount must be greater than zero"
+    if amount > MAX_BUDGET:
+        return None, "Amount is too large"
+
+    category = clean_text(data, "category").lower()
+    if not category:
+        return None, "Category is required"
+    if category not in EXPENSE_CATEGORIES:
+        return None, f"Category must be one of: {', '.join(EXPENSE_CATEGORIES)}"
+
+    expense_date, error = read_date(data, "date", "Date")
+    if error:
+        return None, error
+
+    expense = {
+        "title": title,
+        "amount": amount,
+        "category": category,
+        "date": expense_date.isoformat(),
+        "notes": clean_text(data, "notes"),
+    }
+    return expense, None
