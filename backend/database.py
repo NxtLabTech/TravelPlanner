@@ -1,3 +1,4 @@
+import os
 import sqlite3
 
 from flask import current_app, g
@@ -43,6 +44,9 @@ def close_db(error=None):
 
 
 def init_db(path):
+    directory = os.path.dirname(os.path.abspath(path))
+    if directory:
+        os.makedirs(directory, exist_ok=True)
     db = sqlite3.connect(path)
     db.executescript(SCHEMA)
     db.close()
