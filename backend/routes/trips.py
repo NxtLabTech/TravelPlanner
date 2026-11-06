@@ -17,7 +17,7 @@ def list_trips():
     query = "SELECT * FROM trips"
     params = []
     if search:
-        query += " WHERE name LIKE ? ESCAPE '\\' OR destination LIKE ? ESCAPE '\\'"
+        query += " WHERE LOWER(name) LIKE LOWER(?) ESCAPE '\\' OR LOWER(destination) LIKE LOWER(?) ESCAPE '\\'"
         escaped = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
         params = [f"%{escaped}%", f"%{escaped}%"]
     query += " ORDER BY start_date, id"

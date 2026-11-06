@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 
 import pytest
+from app import create_app
 
 
 def trip_data(**changes):
@@ -168,6 +169,12 @@ def test_search_trips(client, trip):
     assert [t["destination"] for t in by_destination] == ["Manali"]
 
     assert client.get("/api/trips?search=paris").get_json() == []
+
+
+def test_search_trips_unicode_case_insensitive(client):
+    client.post("/api/trips", json=trip_data(name="Oktoberfest", destination="MÜNCHEN"))
+    by_lower = client.get("/api/trips?search=münchen").get_json()
+    assert [t["destination"] for t in by_lower] == ["MÜNCHEN"]
 
 
 def test_filter_trips_by_status(client):
