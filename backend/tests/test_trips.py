@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 
 import pytest
+from app import create_app
 
 
 def trip_data(**changes):
@@ -168,6 +169,13 @@ def test_search_trips(client, trip):
     assert [t["destination"] for t in by_destination] == ["Manali"]
 
     assert client.get("/api/trips?search=paris").get_json() == []
+
+
+def test_custom_database_path_creates_missing_directories(tmp_path):
+    nested_path = tmp_path / "deeply" / "nested" / "test.db"
+    assert not nested_path.parent.exists()
+    create_app(str(nested_path))
+    assert nested_path.exists()
 
 
 def test_filter_trips_by_status(client):
