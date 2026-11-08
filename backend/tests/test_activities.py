@@ -25,6 +25,148 @@ def test_create_activity(client, trip):
     assert activity["trip_id"] == trip["id"]
     assert activity["title"] == "Dinner"
     assert activity["time"] == "20:00"
+    assert activity["duration"] == 0
+
+
+def test_activity_duration_calculates_end_time(client, trip):
+    response = client.post(
+        f"/api/trips/{trip['id']}/activities",
+        json=activity_data(time="10:00", duration=120),
+    )
+    assert response.status_code == 201
+    activity = response.get_json()
+    assert activity["duration"] == 120
+    assert activity["end_time"] == "12:00"
+
+
+def test_create_activity_rejects_duplicate(client, trip):
+    data = activity_data()
+    assert client.post(f"/api/trips/{trip['id']}/activities", json=data).status_code == 201
+
+    response = client.post(f"/api/trips/{trip['id']}/activities", json=data)
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "An identical activity already exists for this trip"}
+
+
+def test_create_activity_rejects_time_conflict(client, trip):
+    data = activity_data(title="Museum")
+    assert client.post(f"/api/trips/{trip['id']}/activities", json=data).status_code == 201
+
+    response = client.post(
+        f"/api/trips/{trip['id']}/activities",
+        json=activity_data(title="Restaurant"),
+    )
+
+    assert response.status_code == 400
+    assert response.get_json() == {
+        "error": "Another activity is already scheduled for this date and time"
+    }
+
+
+def test_create_activity_rejects_overlapping_duration(client, trip):
+    assert client.post(
+        f"/api/trips/{trip['id']}/activities",
+        json=activity_data(title="Museum", time="10:00", duration=120),
+    ).status_code == 201
+
+    response = client.post(
+        f"/api/trips/{trip['id']}/activities",
+        json=activity_data(title="Restaurant", time="11:00", duration=60),
+    )
+    assert response.status_code == 400
+    assert response.get_json() == {
+        "error": "Another activity is already scheduled for this date and time"
+    }
+
+
+def test_non_overlapping_durations_are_allowed(client, trip):
+    assert client.post(
+        f"/api/trips/{trip['id']}/activities",
+        json=activity_data(title="Museum", time="10:00", duration=60),
+    ).status_code == 201
+    assert client.post(
+        f"/api/trips/{trip['id']}/activities",
+        json=activity_data(title="Restaurant", time="11:00", duration=60),
+    ).status_code == 201
+
+
+def test_different_activity_times_and_dates_are_allowed(client, trip):
+    data = activity_data(title="Museum")
+    assert client.post(f"/api/trips/{trip['id']}/activities", json=data).status_code == 201
+    assert client.post(
+        f"/api/trips/{trip['id']}/activities",
+        json=activity_data(title="Restaurant", time="21:00"),
+    ).status_code == 201
+    assert client.post(
+        f"/api/trips/{trip['id']}/activities",
+        json=activity_data(title="Park", date="2026-11-12"),
+    ).status_code == 201
+
+
+def test_update_activity_rejects_time_conflict(client, trip):
+    first = client.post(
+        f"/api/trips/{trip['id']}/activities",
+        json=activity_data(title="Museum"),
+    ).get_json()
+    second = client.post(
+        f"/api/trips/{trip['id']}/activities",
+        json=activity_data(title="Restaurant", time="11:00"),
+    ).get_json()
+
+    response = client.put(
+        f"/api/activities/{second['id']}",
+        json=activity_data(title="Restaurant", time="21:00"),
+    )
+    assert response.status_code == 200
+
+    response = client.put(
+        f"/api/activities/{second['id']}",
+        json=activity_data(title="Restaurant", time="20:00"),
+    )
+    assert response.status_code == 400
+    assert response.get_json() == {
+        "error": "Another activity is already scheduled for this date and time"
+    }
+
+
+def test_different_activity_fields_are_allowed(client, trip):
+    data = activity_data()
+    assert client.post(f"/api/trips/{trip['id']}/activities", json=data).status_code == 201
+
+    for changes in (
+        {"title": "Breakfast", "time": "21:00"},
+        {"date": "2026-11-12"},
+        {"time": "22:00"},
+        {"location": "Different location", "time": "23:00"},
+    ):
+        assert client.post(
+            f"/api/trips/{trip['id']}/activities",
+            json=activity_data(**changes),
+        ).status_code == 201
+
+
+def test_update_activity_allows_same_activity_and_different_time(client, trip):
+    first = client.post(
+        f"/api/trips/{trip['id']}/activities",
+        json=activity_data(title="First"),
+    ).get_json()
+    second = client.post(
+        f"/api/trips/{trip['id']}/activities",
+        json=activity_data(title="Second", time="21:00"),
+    ).get_json()
+
+    unchanged = client.put(
+        f"/api/activities/{first['id']}",
+        json=activity_data(title="First"),
+    )
+    duplicate = client.put(
+        f"/api/activities/{second['id']}",
+        json=activity_data(title="First", time="21:00"),
+    )
+
+    assert unchanged.status_code == 200
+    assert duplicate.status_code == 200
 
 
 def test_create_activity_with_only_required_fields(client, trip):
@@ -94,12 +236,29 @@ def test_invalid_activity_id(client):
     ({"date": "tomorrow"}, "Date must be a valid date (YYYY-MM-DD)"),
     ({"date": "2026-11-09"}, "Activity date must be within the trip dates"),
     ({"date": "2026-11-15"}, "Activity date must be within the trip dates"),
+    ({"time": "9:00"}, "Time must be in HH:MM format"),
     ({"time": "25:00"}, "Time must be in HH:MM format"),
+    ({"time": "12:75"}, "Time must be in HH:MM format"),
+    ({"time": "abc"}, "Time must be in HH:MM format"),
+    ({"time": "10:2"}, "Time must be in HH:MM format"),
+    ({"duration": -1}, "Duration cannot be negative"),
+    ({"duration": 1.5}, "Duration must be a whole number of minutes"),
+    ({"duration": 1441}, "Duration cannot exceed 24 hours"),
 ])
 def test_create_activity_invalid_data(client, trip, changes, message):
     response = client.post(f"/api/trips/{trip['id']}/activities", json=activity_data(**changes))
     assert response.status_code == 400
     assert response.get_json() == {"error": message}
+
+
+@pytest.mark.parametrize("time", ["00:00", "09:00", "12:30", "18:45", "23:59"])
+def test_create_activity_accepts_valid_time_values(client, trip, time):
+    response = client.post(
+        f"/api/trips/{trip['id']}/activities",
+        json=activity_data(time=time),
+    )
+    assert response.status_code == 201
+    assert response.get_json()["time"] == time
 
 
 def test_activity_allowed_on_first_and_last_trip_day(client, trip):

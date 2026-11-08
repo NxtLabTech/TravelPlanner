@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const emptyActivity = { title: "", date: "", time: "", location: "", notes: "" };
+const emptyActivity = { title: "", date: "", time: "", duration: "", location: "", notes: "" };
 
 const inputClass = "mt-1 w-full rounded border border-gray-300 bg-white px-3 py-2";
 
@@ -19,9 +19,10 @@ export default function ActivityForm({ initialActivity = emptyActivity, minDate,
     setError("");
     setSaving(true);
     try {
-      await onSubmit(activity);
+      await onSubmit({ ...activity, duration: activity.duration === "" ? 0 : Number(activity.duration) });
     } catch (err) {
       setError(err.message);
+    } finally {
       setSaving(false);
     }
   }
@@ -53,6 +54,18 @@ export default function ActivityForm({ initialActivity = emptyActivity, minDate,
           Time
           <input type="time" name="time" value={activity.time} onChange={handleChange} className={inputClass} />
         </label>
+        <label className="block text-sm font-medium">
+          Duration (minutes)
+          <input
+            type="number"
+            name="duration"
+            value={activity.duration}
+            min="0"
+            step="1"
+            onChange={handleChange}
+            className={inputClass}
+          />
+        </label>
       </div>
 
       <label className="block text-sm font-medium">
@@ -71,9 +84,14 @@ export default function ActivityForm({ initialActivity = emptyActivity, minDate,
           disabled={saving}
           className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
         >
-          {submitLabel}
+          {saving ? (submitLabel === "Add activity" ? "Adding..." : "Saving...") : submitLabel}
         </button>
-        <button type="button" onClick={onCancel} className="rounded border border-gray-300 px-4 py-2 text-sm">
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={saving}
+          className="rounded border border-gray-300 px-4 py-2 text-sm disabled:opacity-50"
+        >
           Cancel
         </button>
       </div>

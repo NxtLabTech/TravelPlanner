@@ -22,13 +22,16 @@ def days_from_today(days):
 def test_get_trips_empty(client):
     response = client.get("/api/trips")
     assert response.status_code == 200
-    assert response.get_json() == []
+    assert response.get_json() == {
+        "trips": [], "page": 1, "limit": 10, "total": 0, "total_pages": 0
+    }
 
 
 def test_get_trips(client, trip):
     response = client.get("/api/trips")
     assert response.status_code == 200
-    trips = response.get_json()
+    payload = response.get_json()
+    trips = payload["trips"]
     assert len(trips) == 1
     assert trips[0]["name"] == "Goa Trip"
 
@@ -41,6 +44,98 @@ def test_create_trip(client):
     assert trip["name"] == "Manali Trip"
     assert trip["budget"] == 15000
     assert trip["created_at"]
+    assert trip["reminder_days"] is None
+    assert trip["timezone"] == "UTC"
+    assert trip["destinations"] == ["Manali"]
+
+
+def test_create_trip_stores_timezone(client):
+    response = client.post("/api/trips", json=trip_data(timezone="America/New_York"))
+    assert response.status_code == 201
+    assert response.get_json()["timezone"] == "America/New_York"
+
+
+@pytest.mark.parametrize("timezone", ("Not/AZone", "UTC/Invalid", 3))
+def test_create_trip_rejects_invalid_timezone(client, timezone):
+    response = client.post("/api/trips", json=trip_data(timezone=timezone))
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "Timezone must be a valid IANA timezone"}
+
+
+def test_update_trip_timezone(client, trip):
+    response = client.put(
+        f"/api/trips/{trip['id']}",
+        json=trip_data(timezone="Asia/Kolkata"),
+    )
+    assert response.status_code == 200
+    assert response.get_json()["timezone"] == "Asia/Kolkata"
+
+
+def test_create_trip_stores_destinations_in_order(client):
+    response = client.post(
+        "/api/trips",
+        json=trip_data(
+            destination="Hyderabad",
+            destinations=["Hyderabad", "Goa", "Mumbai", "Hyderabad"],
+        ),
+    )
+    assert response.status_code == 201
+    assert response.get_json()["destinations"] == ["Hyderabad", "Goa", "Mumbai", "Hyderabad"]
+
+
+def test_update_trip_reorders_destinations(client, trip):
+    response = client.put(
+        f"/api/trips/{trip['id']}",
+        json=trip_data(
+            destination="Mumbai",
+            destinations=["Mumbai", "Goa"],
+        ),
+    )
+    assert response.status_code == 200
+    assert response.get_json()["destinations"] == ["Mumbai", "Goa"]
+
+
+@pytest.mark.parametrize("destinations", ([], ["Goa", ""], ["Goa", 3]))
+def test_create_trip_rejects_invalid_destinations(client, destinations):
+    response = client.post("/api/trips", json=trip_data(destinations=destinations))
+    assert response.status_code == 400
+
+
+def test_create_trip_with_reminder(client):
+    response = client.post("/api/trips", json=trip_data(reminder_days=3))
+    assert response.status_code == 201
+    assert response.get_json()["reminder_days"] == 3
+
+
+@pytest.mark.parametrize("reminder_days", (0, 2, 4, 8, "3", True))
+def test_create_trip_rejects_invalid_reminder(client, reminder_days):
+    response = client.post("/api/trips", json=trip_data(reminder_days=reminder_days))
+    assert response.status_code == 400
+    assert response.get_json() == {
+        "error": "Reminder must be 1, 3, or 7 days before the trip"
+    }
+
+
+def test_completed_trip_cannot_have_reminder(client):
+    response = client.post(
+        "/api/trips",
+        json=trip_data(
+            start_date=days_from_today(-10),
+            end_date=days_from_today(-5),
+            reminder_days=1,
+        ),
+    )
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "Completed trips cannot have reminders"}
+
+
+def test_update_trip_reminder(client, trip):
+    response = client.put(
+        f"/api/trips/{trip['id']}",
+        json=trip_data(reminder_days=7),
+    )
+    assert response.status_code == 200
+    assert response.get_json()["reminder_days"] == 7
 
 
 def test_create_trip_without_budget_defaults_to_zero(client):
@@ -154,20 +249,20 @@ def test_search_treats_wildcards_as_plain_text(client, trip):
     client.post("/api/trips", json=trip_data(name="100% Fun"))
     client.post("/api/trips", json=trip_data(name="Ski_Trip"))
 
-    assert [t["name"] for t in client.get("/api/trips?search=%25").get_json()] == ["100% Fun"]
-    assert [t["name"] for t in client.get("/api/trips?search=i_T").get_json()] == ["Ski_Trip"]
+    assert [t["name"] for t in client.get("/api/trips?search=%25").get_json()["trips"]] == ["100% Fun"]
+    assert [t["name"] for t in client.get("/api/trips?search=i_T").get_json()["trips"]] == ["Ski_Trip"]
 
 
 def test_search_trips(client, trip):
     client.post("/api/trips", json=trip_data())
 
-    by_name = client.get("/api/trips?search=goa").get_json()
+    by_name = client.get("/api/trips?search=goa").get_json()["trips"]
     assert [t["name"] for t in by_name] == ["Goa Trip"]
 
-    by_destination = client.get("/api/trips?search=MANALI").get_json()
+    by_destination = client.get("/api/trips?search=MANALI").get_json()["trips"]
     assert [t["destination"] for t in by_destination] == ["Manali"]
 
-    assert client.get("/api/trips?search=paris").get_json() == []
+    assert client.get("/api/trips?search=paris").get_json()["trips"] == []
 
 
 def test_filter_trips_by_status(client):
@@ -176,7 +271,7 @@ def test_filter_trips_by_status(client):
     client.post("/api/trips", json=trip_data(name="Next", start_date=days_from_today(5), end_date=days_from_today(9)))
 
     def names(status):
-        return [t["name"] for t in client.get(f"/api/trips?status={status}").get_json()]
+        return [t["name"] for t in client.get(f"/api/trips?status={status}").get_json()["trips"]]
 
     assert names("completed") == ["Past"]
     assert names("ongoing") == ["Now"]
@@ -188,13 +283,107 @@ def test_trip_status_includes_first_and_last_day(client):
     client.post("/api/trips", json=trip_data(name="Starts today", start_date=today, end_date=days_from_today(3)))
     client.post("/api/trips", json=trip_data(name="Ends today", start_date=days_from_today(-3), end_date=today))
 
-    ongoing = client.get("/api/trips?status=ongoing").get_json()
+    ongoing = client.get("/api/trips?status=ongoing").get_json()["trips"]
     assert sorted(t["name"] for t in ongoing) == ["Ends today", "Starts today"]
 
 
 def test_invalid_status_filter(client):
     response = client.get("/api/trips?status=someday")
     assert response.status_code == 400
+
+
+def test_weather_for_trip(client, trip, monkeypatch):
+    from routes import weather
+
+    responses = iter([
+        {"results": [{"latitude": 17.385, "longitude": 78.4867}]},
+        {"current": {
+            "temperature_2m": 28.5,
+            "relative_humidity_2m": 62,
+            "wind_speed_10m": 12.3,
+            "weather_code": 1,
+        }},
+    ])
+    monkeypatch.setattr(weather, "fetch_json", lambda url: next(responses))
+
+    response = client.get(f"/api/trips/{trip['id']}/weather")
+
+    assert response.status_code == 200
+    assert response.get_json() == {
+        "temperature": 28.5,
+        "condition": "Mainly clear",
+        "humidity": 62,
+        "wind_speed": 12.3,
+        "units": {"temperature": "°C", "wind_speed": "km/h"},
+    }
+
+
+def test_weather_failure_returns_unavailable(client, trip, monkeypatch):
+    from routes import weather
+
+    def fail(url):
+        raise weather.URLError("provider unavailable")
+
+    monkeypatch.setattr(weather, "fetch_json", fail)
+
+    response = client.get(f"/api/trips/{trip['id']}/weather")
+
+    assert response.status_code == 503
+    assert response.get_json() == {"error": "Weather information is unavailable"}
+
+
+def test_trip_location(client, trip, monkeypatch):
+    from routes import weather
+
+    monkeypatch.setattr(
+        weather,
+        "fetch_json",
+        lambda url: {"results": [{"latitude": 17.385, "longitude": 78.4867}]},
+    )
+
+    response = client.get(f"/api/trips/{trip['id']}/location")
+
+    assert response.status_code == 200
+    assert response.get_json() == {"latitude": 17.385, "longitude": 78.4867}
+
+
+def test_trip_location_failure_returns_unavailable(client, trip, monkeypatch):
+    from routes import weather
+
+    monkeypatch.setattr(
+        weather,
+        "fetch_json",
+        lambda url: {"results": []},
+    )
+
+    response = client.get(f"/api/trips/{trip['id']}/location")
+
+    assert response.status_code == 503
+    assert response.get_json() == {"error": "Map location is unavailable"}
+
+
+def test_paginate_trips(client, trip):
+    for index in range(1, 4):
+        client.post("/api/trips", json=trip_data(name=f"Trip {index}"))
+
+    response = client.get("/api/trips?page=2&limit=2")
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert [item["name"] for item in payload["trips"]] == ["Trip 2", "Trip 3"]
+    assert payload["page"] == 2
+    assert payload["limit"] == 2
+    assert payload["total"] == 4
+    assert payload["total_pages"] == 2
+
+
+@pytest.mark.parametrize("query", [
+    "page=0", "page=-1", "page=one", "limit=0", "limit=-1", "limit=ten", "limit=101",
+])
+def test_invalid_pagination_values(client, query):
+    response = client.get(f"/api/trips?{query}")
+    assert response.status_code == 400
+    assert "error" in response.get_json()
 
 
 def test_unknown_route_returns_json(client):

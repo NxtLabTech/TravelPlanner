@@ -14,7 +14,7 @@ function groupByDate(activities) {
   return groups;
 }
 
-export default function Itinerary({ activities, onEdit, onDelete }) {
+export default function Itinerary({ activities, onEdit, onDelete, deletingActivityId = null }) {
   if (activities.length === 0) {
     return <p className="text-sm text-gray-500">No activities yet.</p>;
   }
@@ -32,15 +32,28 @@ export default function Itinerary({ activities, onEdit, onDelete }) {
                     {activity.time && <span className="mr-2 text-gray-500">{activity.time}</span>}
                     {activity.title}
                   </p>
+                  {activity.end_time && (
+                    <p className="text-sm text-gray-500">
+                      Ends at {activity.end_time} ({activity.duration} min)
+                    </p>
+                  )}
                   {activity.location && <p className="text-sm text-gray-600">{activity.location}</p>}
                   {activity.notes && <p className="text-sm text-gray-500">{activity.notes}</p>}
                 </div>
                 <div className="flex shrink-0 gap-3 text-sm">
-                  <button onClick={() => onEdit(activity)} className="text-blue-600 hover:underline">
+                  <button
+                    onClick={() => onEdit(activity)}
+                    disabled={deletingActivityId !== null}
+                    className="text-blue-600 hover:underline disabled:opacity-50"
+                  >
                     Edit
                   </button>
-                  <button onClick={() => onDelete(activity)} className="text-red-600 hover:underline">
-                    Delete
+                  <button
+                    onClick={() => onDelete(activity)}
+                    disabled={deletingActivityId === activity.id}
+                    className="text-red-600 hover:underline disabled:opacity-50"
+                  >
+                    {deletingActivityId === activity.id ? "Deleting..." : "Delete"}
                   </button>
                 </div>
               </li>

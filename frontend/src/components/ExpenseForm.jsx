@@ -1,0 +1,97 @@
+import { useState } from "react";
+
+const emptyExpense = { title: "", amount: "", category: "", date: "", notes: "" };
+const inputClass = "mt-1 w-full rounded border border-gray-300 bg-white px-3 py-2";
+
+export default function ExpenseForm({
+  initialExpense = emptyExpense,
+  minDate,
+  maxDate,
+  submitLabel,
+  onSubmit,
+  onCancel,
+}) {
+  const [expense, setExpense] = useState(initialExpense);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  function handleChange(event) {
+    setExpense({ ...expense, [event.target.name]: event.target.value });
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setError("");
+    setSaving(true);
+    try {
+      await onSubmit({ ...expense, amount: Number(expense.amount) });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4 rounded border border-gray-200 bg-white p-4">
+      {error && <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+      <label className="block text-sm font-medium">
+        Expense title
+        <input name="title" value={expense.title} onChange={handleChange} required className={inputClass} />
+      </label>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="block text-sm font-medium">
+          Amount (₹)
+          <input
+            type="number"
+            name="amount"
+            value={expense.amount}
+            onChange={handleChange}
+            min="0.01"
+            step="0.01"
+            required
+            className={inputClass}
+          />
+        </label>
+        <label className="block text-sm font-medium">
+          Category
+          <input name="category" value={expense.category} onChange={handleChange} required className={inputClass} />
+        </label>
+      </div>
+      <label className="block text-sm font-medium">
+        Date
+        <input
+          type="date"
+          name="date"
+          value={expense.date}
+          min={minDate}
+          max={maxDate}
+          onChange={handleChange}
+          required
+          className={inputClass}
+        />
+      </label>
+      <label className="block text-sm font-medium">
+        Notes
+        <textarea name="notes" value={expense.notes} onChange={handleChange} rows="2" className={inputClass} />
+      </label>
+      <div className="flex gap-3">
+        <button
+          type="submit"
+          disabled={saving}
+          className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
+        >
+          {saving ? (submitLabel === "Add expense" ? "Adding..." : "Saving...") : submitLabel}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={saving}
+          className="rounded border border-gray-300 px-4 py-2 text-sm disabled:opacity-50"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+}
