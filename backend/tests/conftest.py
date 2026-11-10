@@ -6,7 +6,14 @@ from app import create_app
 @pytest.fixture
 def client(tmp_path):
     app = create_app(str(tmp_path / "test.db"))
+    app.config["UPLOAD_DIR"] = str(tmp_path / "uploads")
     return app.test_client()
+
+
+@pytest.fixture
+def upload_dir(client):
+    """Return the upload directory path used by the test client."""
+    return client.application.config["UPLOAD_DIR"]
 
 
 @pytest.fixture

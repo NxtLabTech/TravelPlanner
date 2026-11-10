@@ -6,6 +6,7 @@ from werkzeug.exceptions import HTTPException
 
 from database import close_db, init_db
 from routes.activities import bp as activities_bp
+from routes.documents import bp as documents_bp
 from routes.trips import bp as trips_bp
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -16,11 +17,18 @@ def create_app(database_path=None):
     app.config["DATABASE"] = database_path or os.environ.get(
         "DATABASE_PATH", os.path.join(BASE_DIR, "travelplanner.db")
     )
+    app.config["UPLOAD_DIR"] = os.environ.get(
+        "UPLOAD_DIR", os.path.join(BASE_DIR, "uploads")
+    )
+    app.config["MAX_CONTENT_LENGTH"] = int(
+        os.environ.get("MAX_UPLOAD_SIZE", 10 * 1024 * 1024)
+    )
     init_db(app.config["DATABASE"])
 
     app.teardown_appcontext(close_db)
     app.register_blueprint(trips_bp)
     app.register_blueprint(activities_bp)
+    app.register_blueprint(documents_bp)
 
     @app.errorhandler(HTTPException)
     def handle_http_error(error):
