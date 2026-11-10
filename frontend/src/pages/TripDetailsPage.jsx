@@ -3,15 +3,21 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   createActivity,
   deleteActivity,
+  deleteDocument,
   deleteTrip,
+  downloadDocument,
   getActivities,
+  getDocuments,
   getTrip,
   updateActivity,
+  uploadDocument,
 } from "../services/api.js";
 import { formatBudget, formatDate } from "../format.js";
 import StatusBadge from "../components/StatusBadge.jsx";
 import ActivityForm from "../components/ActivityForm.jsx";
 import Itinerary from "../components/Itinerary.jsx";
+import DocumentUpload from "../components/DocumentUpload.jsx";
+import DocumentList from "../components/DocumentList.jsx";
 
 export default function TripDetailsPage() {
   const { id } = useParams();
@@ -21,12 +27,16 @@ export default function TripDetailsPage() {
   const [error, setError] = useState("");
   // null = form hidden, {} = adding a new activity, otherwise the activity being edited
   const [formActivity, setFormActivity] = useState(null);
+  const [documents, setDocuments] = useState([]);
+  const [showUpload, setShowUpload] = useState(false);
+  const [deletingDocId, setDeletingDocId] = useState(null);
 
   useEffect(() => {
-    Promise.all([getTrip(id), getActivities(id)])
-      .then(([tripData, activityData]) => {
+    Promise.all([getTrip(id), getActivities(id), getDocuments(id)])
+      .then(([tripData, activityData, docData]) => {
         setTrip(tripData);
         setActivities(activityData);
+        setDocuments(docData);
       })
       .catch((err) => setError(err.message));
   }, [id]);
@@ -63,6 +73,30 @@ export default function TripDetailsPage() {
       navigate("/");
     } catch (err) {
       setError(err.message);
+    }
+  }
+
+  async function handleUploadDocument(doc) {
+    await uploadDocument(id, doc);
+    setDocuments(await getDocuments(id));
+    setShowUpload(false);
+  }
+
+  function handleDownloadDocument(doc) {
+    downloadDocument(doc.id);
+  }
+
+  async function handleDeleteDocument(doc) {
+    if (!window.confirm(`Delete "${doc.name}"?`)) return;
+    setError("");
+    setDeletingDocId(doc.id);
+    try {
+      await deleteDocument(doc.id);
+      setDocuments(await getDocuments(id));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDeletingDocId(null);
     }
   }
 
@@ -157,6 +191,34 @@ export default function TripDetailsPage() {
       )}
 
       <Itinerary activities={activities} onEdit={setFormActivity} onDelete={handleDeleteActivity} />
+
+      <div className="mt-8 mb-3 flex items-center justify-between">
+        <h2 className="text-xl font-semibold">Documents</h2>
+        {!showUpload && (
+          <button
+            onClick={() => setShowUpload(true)}
+            className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
+          >
+            Upload document
+          </button>
+        )}
+      </div>
+
+      {showUpload && (
+        <div className="mb-5">
+          <DocumentUpload
+            onUpload={handleUploadDocument}
+            onCancel={() => setShowUpload(false)}
+          />
+        </div>
+      )}
+
+      <DocumentList
+        documents={documents}
+        onDownload={handleDownloadDocument}
+        onDelete={handleDeleteDocument}
+        deleting={deletingDocId}
+      />
     </div>
   );
 }

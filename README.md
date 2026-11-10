@@ -11,6 +11,8 @@ A small travel planning app. Create trips, keep an itinerary of activities for e
 - Itinerary grouped by date
 - Search trips by name or destination
 - Filter trips by status: upcoming, ongoing, completed (calculated from the trip dates)
+- Attach travel documents to a trip (flight tickets, hotel bookings, train tickets, travel insurance, etc.)
+- Upload, download and delete documents with file type and size validation
 
 ## Tech stack
 
@@ -30,12 +32,13 @@ TravelPlanner/
 │   ├── validation.py     # Request validation
 │   ├── routes/
 │   │   ├── trips.py
-│   │   └── activities.py
+│   │   ├── activities.py
+│   │   └── documents.py
 │   ├── tests/
 │   └── requirements.txt
 ├── frontend/
 │   └── src/
-│       ├── components/   # TripForm, ActivityForm, Itinerary, StatusBadge
+│       ├── components/   # TripForm, ActivityForm, Itinerary, StatusBadge, DocumentUpload, DocumentList
 │       ├── pages/        # Trips list, new/edit trip, trip details
 │       ├── services/     # api.js (calls to the Flask API)
 │       ├── App.jsx
@@ -87,6 +90,21 @@ The Vite dev server proxies `/api` requests to Flask, so start both. Open http:/
 
 The SQLite database is stored in `backend/travelplanner.db`. Set the `DATABASE_PATH` environment variable to use a different file. Set `FLASK_DEBUG=1` to run Flask with auto-reload.
 
+### Document uploads
+
+Uploaded documents are stored in `backend/uploads/` by default. Configure the storage location and limits with these environment variables:
+
+| Variable | Default | Description |
+| -------- | ------- | ----------- |
+| `UPLOAD_DIR` | `backend/uploads/` | Directory where uploaded files are stored |
+| `MAX_UPLOAD_SIZE` | `10485760` (10 MB) | Maximum upload size in bytes |
+
+Supported file types: PDF, JPG, JPEG, PNG, GIF, WebP, DOC, DOCX, XLS, XLSX, TXT.
+
+Document categories: Flight Ticket, Hotel Booking, Train Ticket, Travel Insurance, Other.
+
+The upload directory is excluded from Git via `.gitignore`.
+
 ## API
 
 Trips
@@ -107,6 +125,15 @@ Activities
 | POST | `/api/trips/<trip_id>/activities` | Add an activity |
 | PUT | `/api/activities/<id>` | Update an activity |
 | DELETE | `/api/activities/<id>` | Delete an activity |
+
+Documents
+
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| POST | `/api/trips/<trip_id>/documents` | Upload a document (multipart/form-data with `file`, `name`, `category`) |
+| GET | `/api/trips/<trip_id>/documents` | List a trip's documents |
+| GET | `/api/documents/<id>/download` | Download a document |
+| DELETE | `/api/documents/<id>` | Delete a document and its file |
 
 Errors are returned as JSON, for example `{"error": "End date cannot be before start date"}`, with status 400 (invalid input), 404 (not found) or 500 (server error).
 

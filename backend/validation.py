@@ -107,3 +107,68 @@ def validate_activity(data, trip):
         "notes": clean_text(data, "notes"),
     }
     return activity, None
+
+
+# --- Document validation ---
+
+ALLOWED_EXTENSIONS = {
+    ".pdf", ".jpg", ".jpeg", ".png", ".gif", ".webp",
+    ".doc", ".docx", ".xls", ".xlsx", ".txt",
+}
+
+ALLOWED_MIME_TYPES = {
+    "application/pdf",
+    "image/jpeg", "image/png", "image/gif", "image/webp",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "text/plain",
+}
+
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB default
+
+
+def validate_document_upload(file, name, category, allowed_categories, max_file_size=MAX_FILE_SIZE):
+    """Validate a document upload.  Returns (cleaned, error)."""
+    if not name or not name.strip():
+        return None, "Document name is required"
+    name = name.strip()
+
+    if not category or not category.strip():
+        return None, "Document category is required"
+    category = category.strip()
+    if category not in allowed_categories:
+        return None, f"Category must be one of: {', '.join(allowed_categories)}"
+
+    if file is None or file.filename == "":
+        return None, "No file provided"
+
+    original_filename = file.filename
+    import os
+    ext = os.path.splitext(original_filename)[1].lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        return None, f"File type '{ext}' is not allowed"
+
+    # Read file to check size and emptiness
+    file_data = file.read()
+    file.seek(0)
+
+    if len(file_data) == 0:
+        return None, "File is empty"
+
+    if len(file_data) > max_file_size:
+        return None, f"File exceeds maximum size of {max_file_size // (1024 * 1024)} MB"
+
+    # Check MIME type
+    mime_type = file.content_type or "application/octet-stream"
+    if mime_type not in ALLOWED_MIME_TYPES:
+        return None, f"MIME type '{mime_type}' is not allowed"
+
+    return {
+        "name": name,
+        "category": category,
+        "original_filename": original_filename,
+        "mime_type": mime_type,
+        "file_size": len(file_data),
+    }, None

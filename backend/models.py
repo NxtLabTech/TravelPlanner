@@ -26,3 +26,23 @@ def find_trip(trip_id):
 
 def find_activity(activity_id):
     return get_db().execute("SELECT * FROM activities WHERE id = ?", (activity_id,)).fetchone()
+
+
+DOCUMENT_CATEGORIES = (
+    "Flight Ticket",
+    "Hotel Booking",
+    "Train Ticket",
+    "Travel Insurance",
+    "Other",
+)
+
+
+def find_document(document_id):
+    return get_db().execute("SELECT * FROM documents WHERE id = ?", (document_id,)).fetchone()
+
+
+def document_to_dict(row):
+    """Return a document dict safe for API responses (no stored_filename)."""
+    d = dict(row)
+    d.pop("stored_filename", None)
+    return d

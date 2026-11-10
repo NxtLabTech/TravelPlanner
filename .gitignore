@@ -21,6 +21,9 @@ frontend/dist/
 *.sqlite
 *.sqlite3
 
+# Uploaded documents
+backend/uploads/
+
 # Logs and OS/editor files
 *.log
 .DS_Store
