@@ -24,6 +24,19 @@ CREATE TABLE IF NOT EXISTS activities (
     notes TEXT NOT NULL DEFAULT ''
 );
 
+CREATE TABLE IF NOT EXISTS expenses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    trip_id INTEGER NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    amount NUMERIC NOT NULL CHECK(amount > 0),
+    category TEXT NOT NULL,
+    date TEXT NOT NULL,
+    notes TEXT NOT NULL DEFAULT ''
+);
+
+CREATE INDEX IF NOT EXISTS idx_expenses_trip_id
+ON expenses(trip_id);
+
 CREATE INDEX IF NOT EXISTS idx_activities_trip_id ON activities(trip_id);
 """
 
