@@ -107,3 +107,49 @@ def validate_activity(data, trip):
         "notes": clean_text(data, "notes"),
     }
     return activity, None
+
+
+def validate_expense(data, trip):
+    if not isinstance(data, dict):
+        return None, "Request body must be a JSON object"
+
+    title = clean_text(data, "title")
+    if not title:
+        return None, "Title is required"
+
+    amount = data.get("amount")
+    if (
+        isinstance(amount, bool)
+        or not isinstance(amount, (int, float))
+        or not math.isfinite(amount)
+    ):
+        return None, "Amount must be a number"
+
+    if amount <= 0:
+        return None, "Amount must be greater than zero"
+
+    if amount > MAX_BUDGET:
+        return None, "Amount is too large"
+
+    category = clean_text(data, "category")
+    if not category:
+        return None, "Category is required"
+
+    expense_date, error = read_date(data, "date", "Date")
+    if error:
+        return None, error
+
+    if not (
+        parse_date(trip["start_date"])
+        <= expense_date
+        <= parse_date(trip["end_date"])
+    ):
+        return None, "Expense date must be within the trip dates"
+
+    return {
+        "title": title,
+        "amount": amount,
+        "category": category,
+        "date": expense_date.isoformat(),
+        "notes": clean_text(data, "notes"),
+    }, None
