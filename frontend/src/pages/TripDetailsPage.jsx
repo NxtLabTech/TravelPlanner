@@ -5,34 +5,47 @@ import {
   deleteActivity,
   deleteTrip,
   getActivities,
+  getExpenses,
   getTrip,
   updateActivity,
+  createExpense,
+  updateExpense,
+  deleteExpense,
 } from "../services/api.js";
 import { formatBudget, formatDate } from "../format.js";
 import StatusBadge from "../components/StatusBadge.jsx";
 import ActivityForm from "../components/ActivityForm.jsx";
 import Itinerary from "../components/Itinerary.jsx";
+import ExpenseForm from "../components/ExpenseForm.jsx";
+import ExpenseList from "../components/ExpenseList.jsx";
 
 export default function TripDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [trip, setTrip] = useState(null);
   const [activities, setActivities] = useState([]);
+  const [expenses, setExpenses] = useState([]);
   const [error, setError] = useState("");
   // null = form hidden, {} = adding a new activity, otherwise the activity being edited
   const [formActivity, setFormActivity] = useState(null);
+  const [formExpense, setFormExpense] = useState(null);
 
   useEffect(() => {
-    Promise.all([getTrip(id), getActivities(id)])
-      .then(([tripData, activityData]) => {
+    Promise.all([getTrip(id), getActivities(id), getExpenses(id)])
+      .then(([tripData, activityData, expenseData]) => {
         setTrip(tripData);
         setActivities(activityData);
+        setExpenses(expenseData);
       })
       .catch((err) => setError(err.message));
   }, [id]);
 
   async function reloadActivities() {
     setActivities(await getActivities(id));
+  }
+
+  async function reloadExpenses() {
+    setExpenses(await getExpenses(id));
   }
 
   async function handleSaveActivity(activity) {
@@ -56,8 +69,29 @@ export default function TripDetailsPage() {
     }
   }
 
+  async function handleSaveExpense(expense) {
+    if (formExpense.id) {
+      await updateExpense(formExpense.id, expense);
+    } else {
+      await createExpense(id, expense);
+    }
+    await reloadExpenses();
+    setFormExpense(null);
+  }
+
+  async function handleDeleteExpense(expense) {
+    if (!window.confirm(`Delete "${expense.title}"?`)) return;
+    setError("");
+    try {
+      await deleteExpense(expense.id);
+      await reloadExpenses();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   async function handleDeleteTrip() {
-    if (!window.confirm(`Delete "${trip.name}" and all its activities?`)) return;
+    if (!window.confirm(`Delete "${trip.name}" and all its activities and expenses?`)) return;
     try {
       await deleteTrip(id);
       navigate("/");
@@ -157,6 +191,34 @@ export default function TripDetailsPage() {
       )}
 
       <Itinerary activities={activities} onEdit={setFormActivity} onDelete={handleDeleteActivity} />
+
+      <div className="mt-8 mb-3 flex items-center justify-between">
+        <h2 className="text-xl font-semibold">Expenses</h2>
+        {!formExpense && (
+          <button
+            onClick={() => setFormExpense({})}
+            className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
+          >
+            Add expense
+          </button>
+        )}
+      </div>
+
+      {formExpense && (
+        <div className="mb-5">
+          <ExpenseForm
+            key={formExpense.id || "new"}
+            initialExpense={formExpense.id ? formExpense : undefined}
+            minDate={trip.start_date}
+            maxDate={trip.end_date}
+            submitLabel={formExpense.id ? "Save expense" : "Add expense"}
+            onSubmit={handleSaveExpense}
+            onCancel={() => setFormExpense(null)}
+          />
+        </div>
+      )}
+
+      <ExpenseList expenses={expenses} onEdit={setFormExpense} onDelete={handleDeleteExpense} />
     </div>
   );
 }
