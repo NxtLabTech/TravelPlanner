@@ -12,7 +12,7 @@ const emptyTrip = {
 
 const inputClass = "mt-1 w-full rounded border border-gray-300 bg-white px-3 py-2";
 
-export default function TripForm({ initialTrip = emptyTrip, submitLabel, onSubmit, cancelTo }) {
+export default function TripForm({ initialTrip = emptyTrip, submitLabel, onSubmit, cancelTo = "/" }) {
   const [trip, setTrip] = useState(initialTrip);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -87,6 +87,7 @@ export default function TripForm({ initialTrip = emptyTrip, submitLabel, onSubmi
           value={trip.budget}
           onChange={handleChange}
           min="0"
+          step="any"
           className={inputClass}
         />
       </label>

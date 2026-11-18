@@ -16,11 +16,21 @@ def create_app(database_path=None):
     app.config["DATABASE"] = database_path or os.environ.get(
         "DATABASE_PATH", os.path.join(BASE_DIR, "travelplanner.db")
     )
+    db_dir = os.path.dirname(os.path.abspath(app.config["DATABASE"]))
+    if db_dir:
+        os.makedirs(db_dir, exist_ok=True)
     init_db(app.config["DATABASE"])
 
     app.teardown_appcontext(close_db)
     app.register_blueprint(trips_bp)
     app.register_blueprint(activities_bp)
+
+    @app.after_request
+    def set_cors_headers(response):
+        response.headers.setdefault("Access-Control-Allow-Origin", "*")
+        response.headers.setdefault("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+        response.headers.setdefault("Access-Control-Allow-Headers", "Content-Type, Authorization")
+        return response
 
     @app.errorhandler(HTTPException)
     def handle_http_error(error):

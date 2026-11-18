@@ -2,8 +2,12 @@ import { formatDate } from "../format.js";
 
 // Activities arrive sorted by date and time, so grouping is a single pass.
 function groupByDate(activities) {
+  const sorted = [...activities].sort((a, b) => {
+    if (a.date !== b.date) return a.date.localeCompare(b.date);
+    return (a.time || "").localeCompare(b.time || "");
+  });
   const groups = [];
-  for (const activity of activities) {
+  for (const activity of sorted) {
     const last = groups[groups.length - 1];
     if (last && last.date === activity.date) {
       last.activities.push(activity);
@@ -36,10 +40,10 @@ export default function Itinerary({ activities, onEdit, onDelete }) {
                   {activity.notes && <p className="text-sm text-gray-500">{activity.notes}</p>}
                 </div>
                 <div className="flex shrink-0 gap-3 text-sm">
-                  <button onClick={() => onEdit(activity)} className="text-blue-600 hover:underline">
+                  <button type="button" onClick={() => onEdit(activity)} className="text-blue-600 hover:underline">
                     Edit
                   </button>
-                  <button onClick={() => onDelete(activity)} className="text-red-600 hover:underline">
+                  <button type="button" onClick={() => onDelete(activity)} className="text-red-600 hover:underline">
                     Delete
                   </button>
                 </div>

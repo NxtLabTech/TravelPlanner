@@ -18,6 +18,12 @@ def test_get_activities_empty(client, trip):
     assert response.get_json() == []
 
 
+def test_get_activity(client, activity):
+    response = client.get(f"/api/activities/{activity['id']}")
+    assert response.status_code == 200
+    assert response.get_json()["title"] == "Visit Baga Beach"
+
+
 def test_create_activity(client, trip):
     response = client.post(f"/api/trips/{trip['id']}/activities", json=activity_data())
     assert response.status_code == 201
