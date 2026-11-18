@@ -75,6 +75,12 @@ def update_trip(trip_id):
     ).fetchone()[0]
     if outside_dates:
         return jsonify(error="Some activities fall outside the new trip dates. Edit or delete them first"), 400
+    outside_expense_dates = db.execute(
+        "SELECT COUNT(*) FROM expenses WHERE trip_id = ? AND (date < ? OR date > ?)",
+        (trip_id, trip["start_date"], trip["end_date"]),
+    ).fetchone()[0]
+    if outside_expense_dates:
+        return jsonify(error="Some expenses fall outside the new trip dates. Edit or delete them first"), 400
 
     db.execute(
         """UPDATE trips SET name = :name, destination = :destination, start_date = :start_date,

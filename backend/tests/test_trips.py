@@ -78,6 +78,17 @@ def test_delete_trip_deletes_its_activities(client, trip, activity):
     assert client.put(f"/api/activities/{activity['id']}", json={}).status_code == 404
 
 
+def test_delete_trip_deletes_its_expenses(client, trip):
+    expense = client.post(f"/api/trips/{trip['id']}/expenses", json={
+        "title": "Hotel",
+        "amount": 5000,
+        "category": "Accommodation",
+        "date": "2026-11-10",
+    }).get_json()
+    client.delete(f"/api/trips/{trip['id']}")
+    assert client.put(f"/api/expenses/{expense['id']}", json={}).status_code == 404
+
+
 @pytest.mark.parametrize("changes, message", [
     ({"name": ""}, "Name is required"),
     ({"name": "   "}, "Name is required"),

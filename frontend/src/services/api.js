@@ -49,3 +49,19 @@ export function updateActivity(id, activity) {
 export function deleteActivity(id) {
   return request("DELETE", `/api/activities/${id}`);
 }
+
+export function getExpenses(tripId) {
+  return request("GET", `/api/trips/${tripId}/expenses`);
+}
+
+export function createExpense(tripId, expense) {
+  return request("POST", `/api/trips/${tripId}/expenses`, expense);
+}
+
+export function updateExpense(id, expense) {
+  return request("PUT", `/api/expenses/${id}`, expense);
+}
+
+export function deleteExpense(id) {
+  return request("DELETE", `/api/expenses/${id}`);
+}

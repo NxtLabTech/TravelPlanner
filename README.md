@@ -8,6 +8,7 @@ A small travel planning app. Create trips, keep an itinerary of activities for e
 
 - Create, view, edit and delete trips
 - Add, edit and delete activities for a trip
+- Add, view, edit and delete expenses for a trip
 - Itinerary grouped by date
 - Search trips by name or destination
 - Filter trips by status: upcoming, ongoing, completed (calculated from the trip dates)
@@ -107,6 +108,15 @@ Activities
 | POST | `/api/trips/<trip_id>/activities` | Add an activity |
 | PUT | `/api/activities/<id>` | Update an activity |
 | DELETE | `/api/activities/<id>` | Delete an activity |
+
+Expenses
+
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| GET | `/api/trips/<trip_id>/expenses` | List a trip's expenses, ordered by newest date |
+| POST | `/api/trips/<trip_id>/expenses` | Add an expense |
+| PUT | `/api/expenses/<id>` | Update an expense |
+| DELETE | `/api/expenses/<id>` | Delete an expense |
 
 Errors are returned as JSON, for example `{"error": "End date cannot be before start date"}`, with status 400 (invalid input), 404 (not found) or 500 (server error).
 
