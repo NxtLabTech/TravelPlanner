@@ -192,6 +192,19 @@ def test_trip_status_includes_first_and_last_day(client):
     assert sorted(t["name"] for t in ongoing) == ["Ends today", "Starts today"]
 
 
+def test_filter_trips_by_status_is_case_insensitive(client):
+    client.post("/api/trips", json=trip_data(
+        name="Next",
+        start_date=days_from_today(5),
+        end_date=days_from_today(9)
+    ))
+
+    for status in ("UPCOMING", "Upcoming", "upcoming"):
+        response = client.get(f"/api/trips?status={status}")
+        assert response.status_code == 200
+        assert [t["name"] for t in response.get_json()] == ["Next"]
+
+
 def test_invalid_status_filter(client):
     response = client.get("/api/trips?status=someday")
     assert response.status_code == 400
