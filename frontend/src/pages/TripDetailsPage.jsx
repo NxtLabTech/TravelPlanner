@@ -23,12 +23,20 @@ export default function TripDetailsPage() {
   const [formActivity, setFormActivity] = useState(null);
 
   useEffect(() => {
+    let ignore = false;
     Promise.all([getTrip(id), getActivities(id)])
       .then(([tripData, activityData]) => {
+        if (ignore) return;
         setTrip(tripData);
         setActivities(activityData);
       })
-      .catch((err) => setError(err.message));
+      .catch((err) => {
+        if (ignore) return;
+        setError(err.message);
+      });
+    return () => {
+      ignore = true;
+    };
   }, [id]);
 
   async function reloadActivities() {
@@ -51,6 +59,9 @@ export default function TripDetailsPage() {
     try {
       await deleteActivity(activity.id);
       await reloadActivities();
+      if (formActivity && formActivity.id === activity.id) {
+        setFormActivity(null);
+      }
     } catch (err) {
       setError(err.message);
     }
@@ -105,7 +116,7 @@ export default function TripDetailsPage() {
         </div>
       </div>
 
-      <dl className="mt-4 grid gap-4 rounded border border-gray-200 bg-white p-4 text-sm sm:grid-cols-4">
+      <dl className="mt-4 grid gap-4 rounded border border-gray-200 bg-white p-4 text-sm sm:grid-cols-3">
         <div>
           <dt className="text-gray-500">Status</dt>
           <dd className="mt-1">
@@ -123,7 +134,7 @@ export default function TripDetailsPage() {
           <dd className="mt-1">{formatBudget(trip.budget)}</dd>
         </div>
         {trip.description && (
-          <div className="sm:col-span-4">
+          <div className="sm:col-span-3">
             <dt className="text-gray-500">Description</dt>
             <dd className="mt-1">{trip.description}</dd>
           </div>

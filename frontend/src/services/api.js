@@ -15,7 +15,8 @@ export function getTrips({ search = "", status = "" } = {}) {
   const params = new URLSearchParams();
   if (search) params.set("search", search);
   if (status) params.set("status", status);
-  return request("GET", `/api/trips?${params}`);
+  const query = params.toString();
+  return request("GET", query ? `/api/trips?${query}` : "/api/trips");
 }
 
 export function getTrip(id) {
@@ -36,6 +37,10 @@ export function deleteTrip(id) {
 
 export function getActivities(tripId) {
   return request("GET", `/api/trips/${tripId}/activities`);
+}
+
+export function getActivity(id) {
+  return request("GET", `/api/activities/${id}`);
 }
 
 export function createActivity(tripId, activity) {

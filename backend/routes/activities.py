@@ -21,6 +21,17 @@ def list_activities(trip_id):
     return jsonify([dict(row) for row in rows])
 
 
+@bp.get("/activities/<activity_id>")
+def get_activity(activity_id):
+    activity_id = parse_id(activity_id)
+    if activity_id is None:
+        return jsonify(error="Invalid activity id"), 400
+    row = find_activity(activity_id)
+    if row is None:
+        return jsonify(error="Activity not found"), 404
+    return jsonify(dict(row))
+
+
 @bp.post("/trips/<trip_id>/activities")
 def create_activity(trip_id):
     trip_id = parse_id(trip_id)

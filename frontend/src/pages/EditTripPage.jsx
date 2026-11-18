@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { getTrip, updateTrip } from "../services/api.js";
 import TripForm from "../components/TripForm.jsx";
 
@@ -10,7 +10,17 @@ export default function EditTripPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    getTrip(id).then(setTrip).catch((err) => setError(err.message));
+    let ignore = false;
+    getTrip(id)
+      .then((data) => {
+        if (!ignore) setTrip(data);
+      })
+      .catch((err) => {
+        if (!ignore) setError(err.message);
+      });
+    return () => {
+      ignore = true;
+    };
   }, [id]);
 
   async function handleSubmit(updatedTrip) {
@@ -18,7 +28,16 @@ export default function EditTripPage() {
     navigate(`/trips/${id}`);
   }
 
-  if (error) return <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>;
+  if (error) {
+    return (
+      <div>
+        <p className="mb-3 rounded bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+        <Link to="/" className="text-sm text-blue-600 hover:underline">
+          ← Back to trips
+        </Link>
+      </div>
+    );
+  }
   if (!trip) return <p className="text-sm text-gray-500">Loading...</p>;
 
   return (

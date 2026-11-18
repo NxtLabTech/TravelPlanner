@@ -5,9 +5,10 @@ const colors = {
 };
 
 export default function StatusBadge({ status }) {
+  const colorClass = colors[status] || "bg-gray-100 text-gray-800";
   return (
-    <span className={`rounded px-2 py-0.5 text-xs font-medium capitalize ${colors[status]}`}>
-      {status}
+    <span className={`rounded px-2 py-0.5 text-xs font-medium capitalize ${colorClass}`}>
+      {status || "unknown"}
     </span>
   );
 }

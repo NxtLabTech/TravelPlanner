@@ -6,7 +6,11 @@ const inputClass = "mt-1 w-full rounded border border-gray-300 bg-white px-3 py-
 
 // minDate / maxDate are the trip's start and end dates.
 export default function ActivityForm({ initialActivity = emptyActivity, minDate, maxDate, submitLabel, onSubmit, onCancel }) {
-  const [activity, setActivity] = useState(initialActivity);
+  const [activity, setActivity] = useState(() => ({
+    ...emptyActivity,
+    ...initialActivity,
+    date: initialActivity.date || minDate || "",
+  }));
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -57,12 +61,12 @@ export default function ActivityForm({ initialActivity = emptyActivity, minDate,
 
       <label className="block text-sm font-medium">
         Location
-        <input name="location" value={activity.location} onChange={handleChange} className={inputClass} />
+        <input name="location" value={activity.location || ""} onChange={handleChange} className={inputClass} />
       </label>
 
       <label className="block text-sm font-medium">
         Notes
-        <textarea name="notes" value={activity.notes} onChange={handleChange} rows="2" className={inputClass} />
+        <textarea name="notes" value={activity.notes || ""} onChange={handleChange} rows="2" className={inputClass} />
       </label>
 
       <div className="flex gap-3">

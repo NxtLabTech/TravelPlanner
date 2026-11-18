@@ -24,7 +24,18 @@ export default function App() {
           <Route path="/trips/new" element={<NewTripPage />} />
           <Route path="/trips/:id" element={<TripDetailsPage />} />
           <Route path="/trips/:id/edit" element={<EditTripPage />} />
-          <Route path="*" element={<p>Page not found.</p>} />
+          <Route
+            path="*"
+            element={
+              <div className="py-12 text-center">
+                <h2 className="mb-2 text-xl font-semibold">Page not found</h2>
+                <p className="mb-4 text-gray-600">The page you are looking for does not exist.</p>
+                <Link to="/" className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700">
+                  Back to trips
+                </Link>
+              </div>
+            }
+          />
         </Routes>
       </main>
     </div>
