@@ -47,4 +47,23 @@ describe("TripForm", () => {
 
     expect(await screen.findByText("End date cannot be before start date")).toBeInTheDocument();
   });
+
+  it("submits the entered timezone", async () => {
+    const onSubmit = vi.fn().mockResolvedValue();
+    renderForm(onSubmit);
+
+    await fillForm();
+    await userEvent.type(screen.getByLabelText("Timezone"), "America/New_York");
+    await userEvent.click(screen.getByRole("button", { name: "Create trip" }));
+
+    expect(onSubmit).toHaveBeenCalledWith({
+      name: "Goa Trip",
+      destination: "Goa",
+      start_date: "2026-11-10",
+      end_date: "2026-11-14",
+      budget: 20000,
+      description: "",
+      timezone: "America/New_York",
+    });
+  });
 });

@@ -17,6 +17,8 @@ def get_trip_status(start_date, end_date):
 def trip_to_dict(row):
     trip = dict(row)
     trip["status"] = get_trip_status(trip["start_date"], trip["end_date"])
+    if not trip.get("timezone"):
+        trip["timezone"] = "UTC"
     return trip
 
 

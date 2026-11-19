@@ -80,6 +80,17 @@ export default function TripForm({ initialTrip = emptyTrip, submitLabel, onSubmi
       </div>
 
       <label className="block text-sm font-medium">
+        Timezone
+        <input
+          name="timezone"
+          value={trip.timezone ?? ""}
+          onChange={handleChange}
+          placeholder="e.g. America/New_York"
+          className={inputClass}
+        />
+      </label>
+
+      <label className="block text-sm font-medium">
         Budget (₹)
         <input
           type="number"
