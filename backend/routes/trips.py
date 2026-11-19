@@ -37,8 +37,8 @@ def create_trip():
 
     db = get_db()
     cursor = db.execute(
-        """INSERT INTO trips (name, destination, start_date, end_date, budget, description)
-           VALUES (:name, :destination, :start_date, :end_date, :budget, :description)""",
+        """INSERT INTO trips (name, destination, start_date, end_date, budget, description, timezone)
+           VALUES (:name, :destination, :start_date, :end_date, :budget, :description, :timezone)""",
         trip,
     )
     db.commit()
@@ -78,7 +78,7 @@ def update_trip(trip_id):
 
     db.execute(
         """UPDATE trips SET name = :name, destination = :destination, start_date = :start_date,
-           end_date = :end_date, budget = :budget, description = :description
+           end_date = :end_date, budget = :budget, description = :description, timezone = :timezone
            WHERE id = :id""",
         {**trip, "id": trip_id},
     )

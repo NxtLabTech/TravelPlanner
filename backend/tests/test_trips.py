@@ -1,6 +1,10 @@
 from datetime import date, timedelta
+import sqlite3
 
 import pytest
+
+from app import create_app
+from database import get_db
 
 
 def trip_data(**changes):
@@ -89,6 +93,7 @@ def test_delete_trip_deletes_its_activities(client, trip, activity):
     ({"start_date": "2026-12-10", "end_date": "2026-12-01"}, "End date cannot be before start date"),
     ({"budget": -1}, "Budget cannot be negative"),
     ({"budget": "lots"}, "Budget must be a number"),
+    ({"timezone": "Invalid/Zone"}, "Timezone must be a valid IANA timezone"),
 ])
 def test_create_trip_invalid_data(client, changes, message):
     response = client.post("/api/trips", json=trip_data(**changes))
@@ -201,3 +206,127 @@ def test_unknown_route_returns_json(client):
     response = client.get("/api/nothing")
     assert response.status_code == 404
     assert response.get_json() == {"error": "Not Found"}
+
+
+def test_create_trip_with_valid_timezone(client):
+    response = client.post("/api/trips", json=trip_data(timezone="America/New_York"))
+    assert response.status_code == 201
+    trip = response.get_json()
+    assert trip["timezone"] == "America/New_York"
+
+    fetched = client.get(f"/api/trips/{trip['id']}").get_json()
+    assert fetched["timezone"] == "America/New_York"
+
+
+@pytest.mark.parametrize("invalid_tz", [
+    "Invalid/Timezone",
+    "Mars/Curiosity",
+    "UTC+5",
+    "not_a_timezone",
+])
+def test_create_trip_rejects_invalid_timezone(client, invalid_tz):
+    response = client.post("/api/trips", json=trip_data(timezone=invalid_tz))
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "Timezone must be a valid IANA timezone"}
+
+
+def test_create_trip_without_timezone_defaults_to_utc(client):
+    data = trip_data()
+    response = client.post("/api/trips", json=data)
+    assert response.status_code == 201
+    assert response.get_json()["timezone"] == "UTC"
+
+    response_empty = client.post("/api/trips", json=trip_data(timezone=""))
+    assert response_empty.status_code == 201
+    assert response_empty.get_json()["timezone"] == "UTC"
+
+
+def test_read_existing_trip_without_timezone(client):
+    with client.application.app_context():
+        db = get_db()
+        cursor = db.execute(
+            """INSERT INTO trips (name, destination, start_date, end_date, budget, description, timezone)
+               VALUES (?, ?, ?, ?, ?, ?, NULL)""",
+            ("Legacy Trip", "Paris", "2026-12-01", "2026-12-05", 5000, "Old trip"),
+        )
+        db.commit()
+        legacy_id = cursor.lastrowid
+
+    response = client.get(f"/api/trips/{legacy_id}")
+    assert response.status_code == 200
+    assert response.get_json()["timezone"] == "UTC"
+
+    trips = client.get("/api/trips").get_json()
+    legacy_trip = next(t for t in trips if t["id"] == legacy_id)
+    assert legacy_trip["timezone"] == "UTC"
+
+
+def test_existing_database_without_timezone_column(tmp_path):
+    old_db_path = str(tmp_path / "old.db")
+    conn = sqlite3.connect(old_db_path)
+    conn.execute("""
+        CREATE TABLE trips (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            destination TEXT NOT NULL,
+            start_date TEXT NOT NULL,
+            end_date TEXT NOT NULL,
+            budget NUMERIC NOT NULL DEFAULT 0,
+            description TEXT NOT NULL DEFAULT '',
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.execute("""
+        INSERT INTO trips (name, destination, start_date, end_date, budget, description)
+        VALUES ('Pre-migration Trip', 'Rome', '2026-12-01', '2026-12-05', 3000, 'Historic')
+    """)
+    conn.commit()
+    conn.close()
+
+    app = create_app(old_db_path)
+    old_client = app.test_client()
+    response = old_client.get("/api/trips/1")
+    assert response.status_code == 200
+    assert response.get_json()["timezone"] == "UTC"
+
+
+def test_update_trip_timezone(client, trip):
+    assert trip["timezone"] == "UTC"
+
+    data = trip_data(timezone="Asia/Tokyo")
+    response = client.put(f"/api/trips/{trip['id']}", json=data)
+    assert response.status_code == 200
+    assert response.get_json()["timezone"] == "Asia/Tokyo"
+
+    saved = client.get(f"/api/trips/{trip['id']}").get_json()
+    assert saved["timezone"] == "Asia/Tokyo"
+
+
+def test_update_trip_rejects_invalid_timezone(client, trip):
+    response = client.put(f"/api/trips/{trip['id']}", json=trip_data(timezone="Not/A_Zone"))
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "Timezone must be a valid IANA timezone"}
+
+
+def test_activity_times_remain_unchanged_when_trip_timezone_changes(client, trip, activity):
+    assert activity["time"] == "10:00"
+
+    update_data = trip_data(
+        start_date=trip["start_date"],
+        end_date=trip["end_date"],
+        timezone="America/New_York",
+    )
+    response = client.put(f"/api/trips/{trip['id']}", json=update_data)
+    assert response.status_code == 200
+    assert response.get_json()["timezone"] == "America/New_York"
+
+    activities = client.get(f"/api/trips/{trip['id']}/activities").get_json()
+    assert len(activities) == 1
+    assert activities[0]["id"] == activity["id"]
+    assert activities[0]["time"] == "10:00"
+
+    update_data["timezone"] = "Asia/Kolkata"
+    client.put(f"/api/trips/{trip['id']}", json=update_data)
+
+    activities = client.get(f"/api/trips/{trip['id']}/activities").get_json()
+    assert activities[0]["time"] == "10:00"
