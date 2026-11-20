@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   createActivity,
@@ -21,6 +21,8 @@ export default function TripDetailsPage() {
   const [error, setError] = useState("");
   // null = form hidden, {} = adding a new activity, otherwise the activity being edited
   const [formActivity, setFormActivity] = useState(null);
+  const [deletingIds, setDeletingIds] = useState(new Set());
+  const deletingRef = useRef(new Set());
 
   useEffect(() => {
     Promise.all([getTrip(id), getActivities(id)])
@@ -46,13 +48,21 @@ export default function TripDetailsPage() {
   }
 
   async function handleDeleteActivity(activity) {
+    if (deletingRef.current.has(activity.id)) return;
     if (!window.confirm(`Delete "${activity.title}"?`)) return;
+    if (deletingRef.current.has(activity.id)) return;
+
+    deletingRef.current.add(activity.id);
+    setDeletingIds(new Set(deletingRef.current));
     setError("");
     try {
       await deleteActivity(activity.id);
       await reloadActivities();
     } catch (err) {
       setError(err.message);
+    } finally {
+      deletingRef.current.delete(activity.id);
+      setDeletingIds(new Set(deletingRef.current));
     }
   }
 
@@ -149,14 +159,19 @@ export default function TripDetailsPage() {
             initialActivity={formActivity.id ? formActivity : undefined}
             minDate={trip.start_date}
             maxDate={trip.end_date}
-            submitLabel={formActivity.id ? "Save activity" : "Add activity"}
+            submitLabel={formActivity.id ? "Save Changes" : "Add Activity"}
             onSubmit={handleSaveActivity}
             onCancel={() => setFormActivity(null)}
           />
         </div>
       )}
 
-      <Itinerary activities={activities} onEdit={setFormActivity} onDelete={handleDeleteActivity} />
+      <Itinerary
+        activities={activities}
+        onEdit={setFormActivity}
+        onDelete={handleDeleteActivity}
+        deletingIds={deletingIds}
+      />
     </div>
   );
 }
