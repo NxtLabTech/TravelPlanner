@@ -48,7 +48,6 @@ export default function Itinerary({
             type="button"
             role="tab"
             aria-selected={view === "list"}
-            aria-pressed={view === "list"}
             onClick={() => setView("list")}
             className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
               view === "list"
@@ -62,7 +61,6 @@ export default function Itinerary({
             type="button"
             role="tab"
             aria-selected={view === "calendar"}
-            aria-pressed={view === "calendar"}
             onClick={() => setView("calendar")}
             className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
               view === "calendar"
@@ -76,7 +74,7 @@ export default function Itinerary({
       </div>
 
       {view === "list" ? (
-        <div className="space-y-4">
+        <div className="space-y-4" role="tabpanel" aria-label="List View">
           <input
             type="search"
             placeholder="Search activities by title or location"
@@ -140,12 +138,16 @@ export default function Itinerary({
           )}
         </div>
       ) : (
-        <CalendarView
-          activities={activities}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          initialDate={tripStartDate}
-        />
+        <div role="tabpanel" aria-label="Calendar View">
+          <CalendarView
+            activities={activities}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            initialDate={tripStartDate}
+            tripStartDate={tripStartDate}
+            tripEndDate={tripEndDate}
+          />
+        </div>
       )}
     </div>
   );

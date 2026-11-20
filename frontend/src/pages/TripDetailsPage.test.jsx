@@ -69,7 +69,7 @@ describe("TripDetailsPage", () => {
     expect(screen.queryByText("Beach Volleyball")).not.toBeInTheDocument();
   });
 
-  it("switches to Calendar View and displays activities on the calendar", async () => {
+  it("switches to Calendar View and displays activities on the calendar with trip date range", async () => {
     getTrip.mockResolvedValue(mockTrip);
     getActivities.mockResolvedValue(mockActivities);
 
@@ -82,10 +82,12 @@ describe("TripDetailsPage", () => {
     await userEvent.click(screen.getByRole("tab", { name: "Calendar View" }));
 
     expect(screen.getByText("November 2026")).toBeInTheDocument();
-    expect(screen.getByTestId("calendar-day-2026-11-10")).toBeInTheDocument();
+    const day10 = screen.getByTestId("calendar-day-2026-11-10");
+    expect(day10).toBeInTheDocument();
+    expect(day10).toHaveAttribute("data-in-trip-range", "true");
 
     // Click on date 10
-    await userEvent.click(screen.getByTestId("calendar-day-2026-11-10"));
+    await userEvent.click(day10);
 
     const details = screen.getByTestId("selected-date-section");
     expect(details).toHaveTextContent("Beach Volleyball");

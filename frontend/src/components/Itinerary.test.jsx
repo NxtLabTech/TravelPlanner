@@ -46,6 +46,41 @@ describe("Itinerary", () => {
     expect(screen.getByText("Beach")).toBeInTheDocument();
   });
 
+  it("preserves search input when switching views", async () => {
+    render(<Itinerary activities={activities} tripStartDate="2026-11-01" />);
+
+    const searchInput = screen.getByRole("searchbox", { name: "Search activities" });
+    await userEvent.type(searchInput, "beach");
+    expect(screen.getByText("Beach")).toBeInTheDocument();
+    expect(screen.queryByText("Dinner")).not.toBeInTheDocument();
+
+    // Switch to Calendar View
+    await userEvent.click(screen.getByRole("tab", { name: "Calendar View" }));
+    expect(screen.getByText("November 2026")).toBeInTheDocument();
+
+    // Switch back to List View
+    await userEvent.click(screen.getByRole("tab", { name: "List View" }));
+    const restoredInput = screen.getByRole("searchbox", { name: "Search activities" });
+    expect(restoredInput).toHaveValue("beach");
+    expect(screen.getByText("Beach")).toBeInTheDocument();
+    expect(screen.queryByText("Dinner")).not.toBeInTheDocument();
+  });
+
+  it("passes tripStartDate and tripEndDate to CalendarView", async () => {
+    render(
+      <Itinerary
+        activities={activities}
+        tripStartDate="2026-11-05"
+        tripEndDate="2026-11-12"
+      />
+    );
+
+    await userEvent.click(screen.getByRole("tab", { name: "Calendar View" }));
+
+    const inRangeDay = screen.getByTestId("calendar-day-2026-11-10");
+    expect(inRangeDay).toHaveAttribute("data-in-trip-range", "true");
+  });
+
   it("groups activities under one heading per date in List View", () => {
     render(<Itinerary activities={activities} />);
     expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(2);
