@@ -11,31 +11,33 @@ const activities = [
 ];
 
 describe("Itinerary", () => {
-  it("renders a message when there are no activities", () => {
+  it("shows a message when there are no activities", () => {
     render(<Itinerary activities={[]} />);
     expect(screen.getByText("No activities yet.")).toBeInTheDocument();
-  });
-
-  it("renders a search input in the itinerary section", () => {
-    render(<Itinerary activities={activities} />);
-    expect(screen.getByRole("searchbox", { name: "Search activities" })).toBeInTheDocument();
   });
 
   it("groups activities under one heading per date", () => {
     render(<Itinerary activities={activities} />);
     expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(2);
+    expect(screen.getByRole("heading", { name: "10 Nov 2026" })).toBeInTheDocument();
+    expect(screen.getByText("Fort visit")).toBeInTheDocument();
   });
 
-  it("calls onEdit and onDelete when clicking the buttons", async () => {
+  it("calls onEdit and onDelete with the activity", async () => {
     const onEdit = vi.fn();
     const onDelete = vi.fn();
     render(<Itinerary activities={activities} onEdit={onEdit} onDelete={onDelete} />);
 
-    await userEvent.click(screen.getAllByRole("button", { name: "Edit" })[0]);
-    await userEvent.click(screen.getAllByRole("button", { name: "Delete" })[1]);
+    await userEvent.click(screen.getAllByText("Edit")[0]);
+    await userEvent.click(screen.getAllByText("Delete")[1]);
 
     expect(onEdit).toHaveBeenCalledWith(activities[0]);
     expect(onDelete).toHaveBeenCalledWith(activities[1]);
+  });
+
+  it("renders a search input in the itinerary section", () => {
+    render(<Itinerary activities={activities} />);
+    expect(screen.getByRole("searchbox", { name: "Search activities" })).toBeInTheDocument();
   });
 
   it("filters activities by title as the user types", async () => {
@@ -112,5 +114,24 @@ describe("Itinerary", () => {
     expect(screen.getByText("Dinner")).toBeInTheDocument();
     expect(screen.getByText("Art Museum")).toBeInTheDocument();
     expect(screen.getByText("Fort visit")).toBeInTheDocument();
+  });
+
+  it("handles search queries with leading or trailing whitespace", async () => {
+    render(<Itinerary activities={activities} />);
+
+    await userEvent.type(screen.getByLabelText("Search activities"), "  beach  ");
+
+    expect(screen.getByText("Beach")).toBeInTheDocument();
+    expect(screen.queryByText("Dinner")).not.toBeInTheDocument();
+  });
+
+  it("handles activities with missing optional locations safely", async () => {
+    const activitiesWithoutLocation = [
+      { id: 1, title: "Sunset Walk", date: "2026-11-10", time: "18:00" },
+    ];
+    render(<Itinerary activities={activitiesWithoutLocation} />);
+
+    await userEvent.type(screen.getByLabelText("Search activities"), "sunset");
+    expect(screen.getByText("Sunset Walk")).toBeInTheDocument();
   });
 });
