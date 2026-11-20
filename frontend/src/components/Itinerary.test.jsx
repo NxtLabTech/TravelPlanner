@@ -16,13 +16,13 @@ describe("Itinerary", () => {
     expect(screen.getByText("No activities yet.")).toBeInTheDocument();
   });
 
-  it("displays List View by default", () => {
+  it("displays List View by default with aria-pressed buttons", () => {
     render(<Itinerary activities={activities} />);
-    const listBtn = screen.getByRole("tab", { name: "List View" });
-    const calBtn = screen.getByRole("tab", { name: "Calendar View" });
+    const listBtn = screen.getByRole("button", { name: "List View" });
+    const calBtn = screen.getByRole("button", { name: "Calendar View" });
 
-    expect(listBtn).toHaveAttribute("aria-selected", "true");
-    expect(calBtn).toHaveAttribute("aria-selected", "false");
+    expect(listBtn).toHaveAttribute("aria-pressed", "true");
+    expect(calBtn).toHaveAttribute("aria-pressed", "false");
     expect(screen.getByRole("searchbox", { name: "Search activities" })).toBeInTheDocument();
     expect(screen.getByText("Beach")).toBeInTheDocument();
   });
@@ -31,17 +31,17 @@ describe("Itinerary", () => {
     render(<Itinerary activities={activities} tripStartDate="2026-11-01" />);
 
     // Switch to Calendar View
-    await userEvent.click(screen.getByRole("tab", { name: "Calendar View" }));
+    await userEvent.click(screen.getByRole("button", { name: "Calendar View" }));
 
-    expect(screen.getByRole("tab", { name: "Calendar View" })).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByRole("tab", { name: "List View" })).toHaveAttribute("aria-selected", "false");
+    expect(screen.getByRole("button", { name: "Calendar View" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "List View" })).toHaveAttribute("aria-pressed", "false");
     expect(screen.getByText("November 2026")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Previous Month" })).toBeInTheDocument();
 
     // Switch back to List View
-    await userEvent.click(screen.getByRole("tab", { name: "List View" }));
+    await userEvent.click(screen.getByRole("button", { name: "List View" }));
 
-    expect(screen.getByRole("tab", { name: "List View" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("button", { name: "List View" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("searchbox", { name: "Search activities" })).toBeInTheDocument();
     expect(screen.getByText("Beach")).toBeInTheDocument();
   });
@@ -55,11 +55,11 @@ describe("Itinerary", () => {
     expect(screen.queryByText("Dinner")).not.toBeInTheDocument();
 
     // Switch to Calendar View
-    await userEvent.click(screen.getByRole("tab", { name: "Calendar View" }));
+    await userEvent.click(screen.getByRole("button", { name: "Calendar View" }));
     expect(screen.getByText("November 2026")).toBeInTheDocument();
 
     // Switch back to List View
-    await userEvent.click(screen.getByRole("tab", { name: "List View" }));
+    await userEvent.click(screen.getByRole("button", { name: "List View" }));
     const restoredInput = screen.getByRole("searchbox", { name: "Search activities" });
     expect(restoredInput).toHaveValue("beach");
     expect(screen.getByText("Beach")).toBeInTheDocument();
@@ -75,7 +75,7 @@ describe("Itinerary", () => {
       />
     );
 
-    await userEvent.click(screen.getByRole("tab", { name: "Calendar View" }));
+    await userEvent.click(screen.getByRole("button", { name: "Calendar View" }));
 
     const inRangeDay = screen.getByTestId("calendar-day-2026-11-10");
     expect(inRangeDay).toHaveAttribute("data-in-trip-range", "true");
@@ -86,6 +86,34 @@ describe("Itinerary", () => {
     expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(2);
     expect(screen.getByRole("heading", { name: "10 Nov 2026" })).toBeInTheDocument();
     expect(screen.getByText("Fort visit")).toBeInTheDocument();
+  });
+
+  it("sorts activities chronologically by date and time even when input is unsorted without mutating input", () => {
+    const unsortedActivities = [
+      { id: 4, title: "Fort Sunset", date: "2026-11-11", time: "16:00" },
+      { id: 2, title: "Evening Dinner", date: "2026-11-10", time: "20:00" },
+      { id: 3, title: "Morning Museum", date: "2026-11-11", time: "09:00" },
+      { id: 1, title: "Morning Beach", date: "2026-11-10", time: "08:00" },
+    ];
+    const originalCopy = JSON.parse(JSON.stringify(unsortedActivities));
+
+    render(<Itinerary activities={unsortedActivities} />);
+
+    // Verify input was not mutated
+    expect(unsortedActivities).toEqual(originalCopy);
+
+    // Verify dates are rendered chronologically (10 Nov first, then 11 Nov)
+    const headings = screen.getAllByRole("heading", { level: 3 });
+    expect(headings).toHaveLength(2);
+    expect(headings[0]).toHaveTextContent("10 Nov 2026");
+    expect(headings[1]).toHaveTextContent("11 Nov 2026");
+
+    // Verify activities on each date are ordered by time
+    const listItems = screen.getAllByRole("listitem");
+    expect(listItems[0]).toHaveTextContent("Morning Beach");
+    expect(listItems[1]).toHaveTextContent("Evening Dinner");
+    expect(listItems[2]).toHaveTextContent("Morning Museum");
+    expect(listItems[3]).toHaveTextContent("Fort Sunset");
   });
 
   it("calls onEdit and onDelete with the activity in List View", async () => {

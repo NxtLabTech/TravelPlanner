@@ -317,4 +317,71 @@ describe("CalendarView", () => {
     expect(screen.getByText("Sun")).toHaveClass("sm:hidden");
     expect(screen.getByText("Sunday")).toHaveClass("hidden", "sm:inline");
   });
+
+  describe("asynchronously loaded activities", () => {
+    it("updates the calendar to the first activity's month when activities are initially empty and load later", () => {
+      const { rerender } = render(<CalendarView activities={[]} />);
+
+      // Initially on current month
+      const now = new Date();
+      const currentMonthName = now.toLocaleDateString("en-US", { month: "long" });
+      const currentYear = now.getFullYear();
+      expect(screen.getByText(`${currentMonthName} ${currentYear}`)).toBeInTheDocument();
+
+      // Activities arrive asynchronously with a date in July 2027
+      const asyncActivities = [
+        { id: 10, title: "Summer Hike", date: "2027-07-20", time: "09:00" },
+      ];
+      rerender(<CalendarView activities={asyncActivities} />);
+
+      // Calendar moves to the first activity's month (July 2027)
+      expect(screen.getByText("July 2027")).toBeInTheDocument();
+      expect(screen.getByTestId("calendar-day-2027-07-20")).toBeInTheDocument();
+    });
+
+    it("does not override user manual navigation when activities are subsequently loaded", () => {
+      const { rerender } = render(<CalendarView activities={[]} />);
+
+      // User manually navigates
+      fireEvent.click(screen.getByRole("button", { name: "Next Month" }));
+
+      const now = new Date();
+      const nextMonthDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      const nextMonthName = nextMonthDate.toLocaleDateString("en-US", { month: "long" });
+      const nextMonthYear = nextMonthDate.getFullYear();
+      expect(screen.getByText(`${nextMonthName} ${nextMonthYear}`)).toBeInTheDocument();
+
+      // Activities arrive asynchronously later
+      const asyncActivities = [
+        { id: 10, title: "Summer Hike", date: "2027-07-20", time: "09:00" },
+      ];
+      rerender(<CalendarView activities={asyncActivities} />);
+
+      // Calendar remains on the month user navigated to
+      expect(screen.getByText(`${nextMonthName} ${nextMonthYear}`)).toBeInTheDocument();
+    });
+
+    it("preserves priority of a valid initialDate or tripStartDate over asynchronous activities", () => {
+      const { rerender } = render(
+        <CalendarView activities={[]} tripStartDate="2026-11-01" tripEndDate="2026-11-10" />
+      );
+
+      expect(screen.getByText("November 2026")).toBeInTheDocument();
+
+      // Activities arrive asynchronously with a different month
+      const asyncActivities = [
+        { id: 10, title: "Spring Festival", date: "2027-03-15", time: "10:00" },
+      ];
+      rerender(
+        <CalendarView
+          activities={asyncActivities}
+          tripStartDate="2026-11-01"
+          tripEndDate="2026-11-10"
+        />
+      );
+
+      // Calendar stays on the tripStartDate month (November 2026)
+      expect(screen.getByText("November 2026")).toBeInTheDocument();
+    });
+  });
 });

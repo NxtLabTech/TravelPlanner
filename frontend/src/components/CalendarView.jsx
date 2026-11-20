@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { formatDate } from "../format.js";
 
 const WEEKDAYS = [
@@ -73,11 +73,36 @@ export default function CalendarView({
     return parseDateParts(initialSelectedDate) ? initialSelectedDate : null;
   });
 
+  const hasUserNavigated = useRef(false);
+  const hasAutoInitialized = useRef(
+    Boolean(
+      parseDateParts(initialDate) ||
+      parseDateParts(tripStartDate) ||
+      activities?.some((act) => parseDateParts(act?.date))
+    )
+  );
+
   useEffect(() => {
     if (initialDate && parseDateParts(initialDate)) {
       setCurrentMonthDate(getInitialMonth(initialDate, tripStartDate, activities));
+      return;
     }
-  }, [initialDate, tripStartDate]);
+    const hasExplicitDate = Boolean(
+      parseDateParts(initialDate) || parseDateParts(tripStartDate)
+    );
+    // If no initialDate or tripStartDate, and user hasn't manually navigated,
+    // initialize calendar month to first valid activity date once activities become available.
+    if (!hasExplicitDate && !hasUserNavigated.current && !hasAutoInitialized.current) {
+      const firstValid = Array.isArray(activities)
+        ? activities.find((act) => parseDateParts(act?.date))
+        : null;
+      if (firstValid) {
+        hasAutoInitialized.current = true;
+        const parsed = parseDateParts(firstValid.date);
+        setCurrentMonthDate(new Date(parsed.year, parsed.month - 1, 1));
+      }
+    }
+  }, [activities, initialDate, tripStartDate]);
 
   const year = currentMonthDate.getFullYear();
   const monthIndex = currentMonthDate.getMonth(); // 0-indexed
@@ -127,14 +152,17 @@ export default function CalendarView({
 
   // Navigation handlers
   const handlePrevMonth = () => {
+    hasUserNavigated.current = true;
     setCurrentMonthDate((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
   };
 
   const handleNextMonth = () => {
+    hasUserNavigated.current = true;
     setCurrentMonthDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
   };
 
   const handleToday = () => {
+    hasUserNavigated.current = true;
     const now = new Date();
     setCurrentMonthDate(new Date(now.getFullYear(), now.getMonth(), 1));
     setSelectedDate(formatDateKey(now.getFullYear(), now.getMonth() + 1, now.getDate()));
@@ -257,7 +285,7 @@ export default function CalendarView({
                     : "bg-white hover:bg-gray-50"
                 }`}
               >
-                {/* Date number and activity indicator (valid HTML phrasing content inside button) */}
+                {/* Date number and activity indicator */}
                 <span className="flex w-full items-center justify-between">
                   <span
                     className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs sm:text-sm font-medium ${
@@ -280,7 +308,7 @@ export default function CalendarView({
                   )}
                 </span>
 
-                {/* Activity items list (valid HTML phrasing content inside button) */}
+                {/* Activity items list */}
                 <span className="mt-1 block w-full space-y-1 overflow-hidden">
                   {dayActivities.slice(0, 2).map((act) => (
                     <span
@@ -339,11 +367,12 @@ export default function CalendarView({
               {selectedDateMonthInfo && (
                 <button
                   type="button"
-                  onClick={() =>
+                  onClick={() => {
+                    hasUserNavigated.current = true;
                     setCurrentMonthDate(
                       new Date(selectedDateMonthInfo.year, selectedDateMonthInfo.monthIndex, 1)
-                    )
-                  }
+                    );
+                  }}
                   className="text-xs font-medium text-blue-600 hover:underline"
                 >
                   View month

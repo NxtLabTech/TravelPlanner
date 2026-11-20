@@ -2,7 +2,26 @@ import { useState } from "react";
 import { formatDate } from "../format.js";
 import CalendarView from "./CalendarView.jsx";
 
-// Activities arrive sorted by date and time, so grouping is a single pass.
+// Safely sorts activities chronologically by date and time without mutating the original array.
+export function sortActivities(activities) {
+  if (!Array.isArray(activities)) return [];
+  return [...activities].sort((a, b) => {
+    const dateA = a?.date || "";
+    const dateB = b?.date || "";
+    if (dateA !== dateB) {
+      if (!dateA) return 1;
+      if (!dateB) return -1;
+      return dateA.localeCompare(dateB);
+    }
+    const timeA = a?.time || "";
+    const timeB = b?.time || "";
+    if (!timeA && timeB) return 1;
+    if (timeA && !timeB) return -1;
+    return timeA.localeCompare(timeB);
+  });
+}
+
+// Groups activities that have already been sorted chronologically.
 function groupByDate(activities) {
   const groups = [];
   for (const activity of activities) {
@@ -26,28 +45,28 @@ export default function Itinerary({
   const [view, setView] = useState("list"); // "list" | "calendar"
   const [search, setSearch] = useState("");
 
+  const sortedActivities = sortActivities(activities);
+
   const query = search.trim().toLowerCase();
   const filteredActivities = query
-    ? activities.filter((activity) => {
+    ? sortedActivities.filter((activity) => {
         const title = (activity.title || "").toLowerCase();
         const location = (activity.location || "").toLowerCase();
         return title.includes(query) || location.includes(query);
       })
-    : activities;
+    : sortedActivities;
 
   return (
     <div className="space-y-4">
-      {/* View Switcher Tabs */}
+      {/* View Switcher */}
       <div className="flex items-center justify-between border-b border-gray-200 pb-3">
         <div
           className="inline-flex rounded-lg bg-gray-100 p-1"
-          role="tablist"
           aria-label="Itinerary view options"
         >
           <button
             type="button"
-            role="tab"
-            aria-selected={view === "list"}
+            aria-pressed={view === "list"}
             onClick={() => setView("list")}
             className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
               view === "list"
@@ -59,8 +78,7 @@ export default function Itinerary({
           </button>
           <button
             type="button"
-            role="tab"
-            aria-selected={view === "calendar"}
+            aria-pressed={view === "calendar"}
             onClick={() => setView("calendar")}
             className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
               view === "calendar"
@@ -74,7 +92,7 @@ export default function Itinerary({
       </div>
 
       {view === "list" ? (
-        <div className="space-y-4" role="tabpanel" aria-label="List View">
+        <div className="space-y-4">
           <input
             type="search"
             placeholder="Search activities by title or location"
@@ -91,9 +109,9 @@ export default function Itinerary({
           ) : (
             <div className="space-y-5">
               {groupByDate(filteredActivities).map((group) => (
-                <section key={group.date}>
+                <section key={group.date || "unscheduled"}>
                   <h3 className="mb-2 text-sm font-semibold text-gray-600">
-                    {formatDate(group.date)}
+                    {group.date ? formatDate(group.date) : "Unscheduled"}
                   </h3>
                   <ul className="divide-y divide-gray-200 rounded border border-gray-200 bg-white">
                     {group.activities.map((activity) => (
@@ -138,9 +156,9 @@ export default function Itinerary({
           )}
         </div>
       ) : (
-        <div role="tabpanel" aria-label="Calendar View">
+        <div>
           <CalendarView
-            activities={activities}
+            activities={sortedActivities}
             onEdit={onEdit}
             onDelete={onDelete}
             initialDate={tripStartDate}

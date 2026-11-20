@@ -47,8 +47,8 @@ describe("TripDetailsPage", () => {
 
     expect(await screen.findByText("Goa Vacation")).toBeInTheDocument();
     expect(await screen.findByText("Beach Volleyball")).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "List View" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Calendar View" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "List View" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Calendar View" })).toBeInTheDocument();
     expect(screen.getByRole("searchbox", { name: "Search activities" })).toBeInTheDocument();
   });
 
@@ -79,7 +79,7 @@ describe("TripDetailsPage", () => {
     await screen.findByText("Beach Volleyball");
 
     // Switch to Calendar View
-    await userEvent.click(screen.getByRole("tab", { name: "Calendar View" }));
+    await userEvent.click(screen.getByRole("button", { name: "Calendar View" }));
 
     expect(screen.getByText("November 2026")).toBeInTheDocument();
     const day10 = screen.getByTestId("calendar-day-2026-11-10");
