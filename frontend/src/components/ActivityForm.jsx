@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 const emptyActivity = { title: "", date: "", time: "", location: "", notes: "" };
 
@@ -9,6 +9,11 @@ export default function ActivityForm({ initialActivity = emptyActivity, minDate,
   const [activity, setActivity] = useState(initialActivity);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const submittingRef = useRef(false);
+
+  const isEditing = Boolean(initialActivity.id);
+  const defaultLabel = isEditing ? "Save Changes" : "Add Activity";
+  const loadingLabel = isEditing ? "Saving..." : "Adding...";
 
   function handleChange(event) {
     setActivity({ ...activity, [event.target.name]: event.target.value });
@@ -16,13 +21,17 @@ export default function ActivityForm({ initialActivity = emptyActivity, minDate,
 
   async function handleSubmit(event) {
     event.preventDefault();
+    if (submittingRef.current || saving) return;
+    submittingRef.current = true;
     setError("");
     setSaving(true);
     try {
       await onSubmit(activity);
     } catch (err) {
       setError(err.message);
+    } finally {
       setSaving(false);
+      submittingRef.current = false;
     }
   }
 
@@ -69,11 +78,17 @@ export default function ActivityForm({ initialActivity = emptyActivity, minDate,
         <button
           type="submit"
           disabled={saving}
+          aria-busy={saving}
           className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
         >
-          {submitLabel}
+          {saving ? loadingLabel : (submitLabel || defaultLabel)}
         </button>
-        <button type="button" onClick={onCancel} className="rounded border border-gray-300 px-4 py-2 text-sm">
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={saving}
+          className="rounded border border-gray-300 px-4 py-2 text-sm disabled:opacity-50"
+        >
           Cancel
         </button>
       </div>

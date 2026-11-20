@@ -33,4 +33,18 @@ describe("Itinerary", () => {
     expect(onEdit).toHaveBeenCalledWith(activities[0]);
     expect(onDelete).toHaveBeenCalledWith(activities[1]);
   });
+
+  it("displays Deleting... and disables the button for the activity being deleted", () => {
+    render(<Itinerary activities={activities} onEdit={vi.fn()} onDelete={vi.fn()} deletingId={2} />);
+
+    const deletingBtn = screen.getByRole("button", { name: "Deleting..." });
+    expect(deletingBtn).toBeInTheDocument();
+    expect(deletingBtn).toBeDisabled();
+    expect(deletingBtn).toHaveAttribute("aria-busy", "true");
+
+    // Other activity delete buttons remain enabled with label Delete
+    const normalDeleteBtns = screen.getAllByRole("button", { name: "Delete" });
+    expect(normalDeleteBtns).toHaveLength(2);
+    normalDeleteBtns.forEach((btn) => expect(btn).not.toBeDisabled());
+  });
 });
