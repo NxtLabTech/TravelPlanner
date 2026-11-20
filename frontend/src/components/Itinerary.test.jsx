@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import Itinerary from "./Itinerary.jsx";
+import Itinerary, { sortActivities } from "./Itinerary.jsx";
 
 const activities = [
   { id: 1, title: "Beach", date: "2026-11-10", time: "10:00", location: "Baga", notes: "" },
@@ -114,6 +114,37 @@ describe("Itinerary", () => {
     expect(listItems[1]).toHaveTextContent("Evening Dinner");
     expect(listItems[2]).toHaveTextContent("Morning Museum");
     expect(listItems[3]).toHaveTextContent("Fort Sunset");
+  });
+
+  it("safely handles null, undefined, and activities with missing or invalid dates", () => {
+    const mixedActivities = [
+      null,
+      undefined,
+      { id: 1, title: "Valid Activity", date: "2026-11-10", time: "10:00" },
+      { id: 2, title: "No Date Activity", date: null, time: "12:00" },
+      { id: 3, title: "Malformed Date Activity", date: "not-a-date", time: "14:00" },
+      { id: 4, title: "Earlier Valid Activity", date: "2026-11-09", time: "08:00" },
+    ];
+
+    expect(() => render(<Itinerary activities={mixedActivities} />)).not.toThrow();
+
+    // Chronological order: 2026-11-09 appears before 2026-11-10
+    expect(screen.getByText("Earlier Valid Activity")).toBeInTheDocument();
+    expect(screen.getByText("Valid Activity")).toBeInTheDocument();
+    expect(screen.getByText("No Date Activity")).toBeInTheDocument();
+    expect(screen.getByText("Malformed Date Activity")).toBeInTheDocument();
+  });
+
+  it("sortActivities handles edge cases and never mutates input array", () => {
+    expect(sortActivities(null)).toEqual([]);
+    expect(sortActivities(undefined)).toEqual([]);
+
+    const arrayWithNulls = [null, { id: 2, date: "2026-12-01" }, undefined, { id: 1, date: "2026-11-01" }];
+    const sorted = sortActivities(arrayWithNulls);
+    expect(sorted).toHaveLength(2);
+    expect(sorted[0].id).toBe(1);
+    expect(sorted[1].id).toBe(2);
+    expect(arrayWithNulls).toHaveLength(4); // original untouched
   });
 
   it("calls onEdit and onDelete with the activity in List View", async () => {

@@ -73,6 +73,8 @@ export default function CalendarView({
     return parseDateParts(initialSelectedDate) ? initialSelectedDate : null;
   });
 
+  const prevInitialDateRef = useRef(initialDate);
+  const prevTripStartDateRef = useRef(tripStartDate);
   const hasUserNavigated = useRef(false);
   const hasAutoInitialized = useRef(
     Boolean(
@@ -83,16 +85,36 @@ export default function CalendarView({
   );
 
   useEffect(() => {
-    if (initialDate && parseDateParts(initialDate)) {
+    const isInitialDateValid = Boolean(parseDateParts(initialDate));
+    const isTripStartDateValid = Boolean(parseDateParts(tripStartDate));
+
+    // Detect genuine prop changes for initialDate or tripStartDate
+    const initialDateChanged = prevInitialDateRef.current !== initialDate;
+    const tripStartDateChanged = prevTripStartDateRef.current !== tripStartDate;
+    prevInitialDateRef.current = initialDate;
+    prevTripStartDateRef.current = tripStartDate;
+
+    if (initialDateChanged && isInitialDateValid) {
+      hasUserNavigated.current = false;
+      hasAutoInitialized.current = true;
       setCurrentMonthDate(getInitialMonth(initialDate, tripStartDate, activities));
       return;
     }
-    const hasExplicitDate = Boolean(
-      parseDateParts(initialDate) || parseDateParts(tripStartDate)
-    );
-    // If no initialDate or tripStartDate, and user hasn't manually navigated,
-    // initialize calendar month to first valid activity date once activities become available.
-    if (!hasExplicitDate && !hasUserNavigated.current && !hasAutoInitialized.current) {
+
+    if (tripStartDateChanged && isTripStartDateValid && !isInitialDateValid) {
+      hasUserNavigated.current = false;
+      hasAutoInitialized.current = true;
+      setCurrentMonthDate(getInitialMonth(initialDate, tripStartDate, activities));
+      return;
+    }
+
+    // Once initialDate or tripStartDate is valid, activities updates must not reset the displayed month
+    if (isInitialDateValid || isTripStartDateValid) {
+      return;
+    }
+
+    // Asynchronously loaded activities when neither initialDate nor tripStartDate is valid
+    if (!hasUserNavigated.current && !hasAutoInitialized.current) {
       const firstValid = Array.isArray(activities)
         ? activities.find((act) => parseDateParts(act?.date))
         : null;

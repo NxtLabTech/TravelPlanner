@@ -2,34 +2,56 @@ import { useState } from "react";
 import { formatDate } from "../format.js";
 import CalendarView from "./CalendarView.jsx";
 
+// Safely formats an ISO date or returns a fallback if invalid or missing
+function safeFormatDate(isoDate) {
+  if (!isoDate || typeof isoDate !== "string") return "Unscheduled";
+  const parts = isoDate.trim().split("-");
+  if (parts.length !== 3) return isoDate;
+  const [y, m, d] = parts.map(Number);
+  if (!Number.isInteger(y) || !Number.isInteger(m) || !Number.isInteger(d)) return isoDate;
+  try {
+    return formatDate(isoDate);
+  } catch {
+    return isoDate;
+  }
+}
+
 // Safely sorts activities chronologically by date and time without mutating the original array.
 export function sortActivities(activities) {
   if (!Array.isArray(activities)) return [];
-  return [...activities].sort((a, b) => {
-    const dateA = a?.date || "";
-    const dateB = b?.date || "";
-    if (dateA !== dateB) {
-      if (!dateA) return 1;
-      if (!dateB) return -1;
-      return dateA.localeCompare(dateB);
-    }
-    const timeA = a?.time || "";
-    const timeB = b?.time || "";
-    if (!timeA && timeB) return 1;
-    if (timeA && !timeB) return -1;
-    return timeA.localeCompare(timeB);
-  });
+  return activities
+    .filter((act) => act && typeof act === "object")
+    .sort((a, b) => {
+      const dateA = typeof a.date === "string" ? a.date.trim() : "";
+      const dateB = typeof b.date === "string" ? b.date.trim() : "";
+      if (dateA !== dateB) {
+        if (!dateA) return 1;
+        if (!dateB) return -1;
+        return dateA.localeCompare(dateB);
+      }
+      const timeA = typeof a.time === "string" ? a.time.trim() : "";
+      const timeB = typeof b.time === "string" ? b.time.trim() : "";
+      if (!timeA && timeB) return 1;
+      if (timeA && !timeB) return -1;
+      return timeA.localeCompare(timeB);
+    });
 }
 
 // Groups activities that have already been sorted chronologically.
 function groupByDate(activities) {
   const groups = [];
+  if (!Array.isArray(activities)) return groups;
   for (const activity of activities) {
+    if (!activity || typeof activity !== "object") continue;
+    const dateKey =
+      typeof activity.date === "string" && activity.date.trim()
+        ? activity.date.trim()
+        : null;
     const last = groups[groups.length - 1];
-    if (last && last.date === activity.date) {
+    if (last && last.date === dateKey) {
       last.activities.push(activity);
     } else {
-      groups.push({ date: activity.date, activities: [activity] });
+      groups.push({ date: dateKey, activities: [activity] });
     }
   }
   return groups;
@@ -50,6 +72,7 @@ export default function Itinerary({
   const query = search.trim().toLowerCase();
   const filteredActivities = query
     ? sortedActivities.filter((activity) => {
+        if (!activity) return false;
         const title = (activity.title || "").toLowerCase();
         const location = (activity.location || "").toLowerCase();
         return title.includes(query) || location.includes(query);
@@ -108,15 +131,15 @@ export default function Itinerary({
             <p className="text-sm text-gray-500">No activities found</p>
           ) : (
             <div className="space-y-5">
-              {groupByDate(filteredActivities).map((group) => (
-                <section key={group.date || "unscheduled"}>
+              {groupByDate(filteredActivities).map((group, groupIdx) => (
+                <section key={group.date || `unscheduled-${groupIdx}`}>
                   <h3 className="mb-2 text-sm font-semibold text-gray-600">
-                    {group.date ? formatDate(group.date) : "Unscheduled"}
+                    {safeFormatDate(group.date)}
                   </h3>
                   <ul className="divide-y divide-gray-200 rounded border border-gray-200 bg-white">
-                    {group.activities.map((activity) => (
+                    {group.activities.map((activity, actIdx) => (
                       <li
-                        key={activity.id}
+                        key={activity.id || `act-${groupIdx}-${actIdx}`}
                         className="flex items-start justify-between gap-4 p-3"
                       >
                         <div>

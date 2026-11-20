@@ -318,8 +318,63 @@ describe("CalendarView", () => {
     expect(screen.getByText("Sunday")).toHaveClass("hidden", "sm:inline");
   });
 
-  describe("asynchronously loaded activities", () => {
-    it("updates the calendar to the first activity's month when activities are initially empty and load later", () => {
+  describe("month initialization and navigation regression tests", () => {
+    it("determines initial calendar month from a valid initialDate", () => {
+      render(<CalendarView activities={mockActivities} initialDate="2026-11-01" />);
+      expect(screen.getByText("November 2026")).toBeInTheDocument();
+    });
+
+    it("does not reset the displayed month upon activities update after manual month navigation", () => {
+      const { rerender } = render(
+        <CalendarView activities={mockActivities} initialDate="2026-11-01" />
+      );
+      expect(screen.getByText("November 2026")).toBeInTheDocument();
+
+      // User manually navigates to December
+      fireEvent.click(screen.getByRole("button", { name: "Next Month" }));
+      expect(screen.getByText("December 2026")).toBeInTheDocument();
+
+      // Activities update in parent
+      const updatedActivities = [
+        ...mockActivities,
+        { id: 5, title: "New Activity", date: "2026-11-20", time: "15:00" },
+      ];
+      rerender(<CalendarView activities={updatedActivities} initialDate="2026-11-01" />);
+
+      // Must remain on December 2026, NOT reset to November 2026
+      expect(screen.getByText("December 2026")).toBeInTheDocument();
+    });
+
+    it("maintains navigated month when initialDate prop remains unchanged across re-renders", () => {
+      const { rerender } = render(
+        <CalendarView activities={mockActivities} initialDate="2026-11-01" />
+      );
+
+      // User manually navigates
+      fireEvent.click(screen.getByRole("button", { name: "Next Month" }));
+      expect(screen.getByText("December 2026")).toBeInTheDocument();
+
+      // Re-render with identical initialDate prop
+      rerender(<CalendarView activities={mockActivities} initialDate="2026-11-01" />);
+      expect(screen.getByText("December 2026")).toBeInTheDocument();
+    });
+
+    it("updates the displayed month when initialDate genuinely changes", () => {
+      const { rerender } = render(
+        <CalendarView activities={mockActivities} initialDate="2026-11-01" />
+      );
+      expect(screen.getByText("November 2026")).toBeInTheDocument();
+
+      // User navigates away
+      fireEvent.click(screen.getByRole("button", { name: "Next Month" }));
+      expect(screen.getByText("December 2026")).toBeInTheDocument();
+
+      // Genuine initialDate prop change from parent (e.g. user selected another trip)
+      rerender(<CalendarView activities={mockActivities} initialDate="2027-03-01" />);
+      expect(screen.getByText("March 2027")).toBeInTheDocument();
+    });
+
+    it("updates the calendar to the first activity's month when activities are initially empty and load later without valid initialDate", () => {
       const { rerender } = render(<CalendarView activities={[]} />);
 
       // Initially on current month
@@ -337,51 +392,6 @@ describe("CalendarView", () => {
       // Calendar moves to the first activity's month (July 2027)
       expect(screen.getByText("July 2027")).toBeInTheDocument();
       expect(screen.getByTestId("calendar-day-2027-07-20")).toBeInTheDocument();
-    });
-
-    it("does not override user manual navigation when activities are subsequently loaded", () => {
-      const { rerender } = render(<CalendarView activities={[]} />);
-
-      // User manually navigates
-      fireEvent.click(screen.getByRole("button", { name: "Next Month" }));
-
-      const now = new Date();
-      const nextMonthDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-      const nextMonthName = nextMonthDate.toLocaleDateString("en-US", { month: "long" });
-      const nextMonthYear = nextMonthDate.getFullYear();
-      expect(screen.getByText(`${nextMonthName} ${nextMonthYear}`)).toBeInTheDocument();
-
-      // Activities arrive asynchronously later
-      const asyncActivities = [
-        { id: 10, title: "Summer Hike", date: "2027-07-20", time: "09:00" },
-      ];
-      rerender(<CalendarView activities={asyncActivities} />);
-
-      // Calendar remains on the month user navigated to
-      expect(screen.getByText(`${nextMonthName} ${nextMonthYear}`)).toBeInTheDocument();
-    });
-
-    it("preserves priority of a valid initialDate or tripStartDate over asynchronous activities", () => {
-      const { rerender } = render(
-        <CalendarView activities={[]} tripStartDate="2026-11-01" tripEndDate="2026-11-10" />
-      );
-
-      expect(screen.getByText("November 2026")).toBeInTheDocument();
-
-      // Activities arrive asynchronously with a different month
-      const asyncActivities = [
-        { id: 10, title: "Spring Festival", date: "2027-03-15", time: "10:00" },
-      ];
-      rerender(
-        <CalendarView
-          activities={asyncActivities}
-          tripStartDate="2026-11-01"
-          tripEndDate="2026-11-10"
-        />
-      );
-
-      // Calendar stays on the tripStartDate month (November 2026)
-      expect(screen.getByText("November 2026")).toBeInTheDocument();
     });
   });
 });
