@@ -4,13 +4,13 @@ import { formatDate } from "../format.js";
 // Activities arrive sorted by date and time, so grouping is a single pass.
 function groupByDate(activities) {
   const groups = [];
-  let currentGroup = null;
   for (const activity of activities) {
-    if (!currentGroup || currentGroup.date !== activity.date) {
-      currentGroup = { date: activity.date, activities: [] };
-      groups.push(currentGroup);
+    const last = groups[groups.length - 1];
+    if (last && last.date === activity.date) {
+      last.activities.push(activity);
+    } else {
+      groups.push({ date: activity.date, activities: [activity] });
     }
-    currentGroup.activities.push(activity);
   }
   return groups;
 }
