@@ -88,18 +88,28 @@ def test_invalid_activity_id(client):
     assert response.get_json() == {"error": "Invalid activity id"}
 
 
+
 @pytest.mark.parametrize("changes, message", [
     ({"title": ""}, "Title is required"),
     ({"date": ""}, "Date is required"),
     ({"date": "tomorrow"}, "Date must be a valid date (YYYY-MM-DD)"),
     ({"date": "2026-11-09"}, "Activity date must be within the trip dates"),
     ({"date": "2026-11-15"}, "Activity date must be within the trip dates"),
-    ({"time": "25:00"}, "Time must be in HH:MM format"),
+    ({"time": "9:00"}, "Time must be in HH:MM format (24-hour clock)"),
+    ({"time": "25:00"}, "Time must be in HH:MM format (24-hour clock)"),
+    ({"time": "12:75"}, "Time must be in HH:MM format (24-hour clock)"),
+    ({"time": "abc"}, "Time must be in HH:MM format (24-hour clock)"),
+    ({"time": "10:2"}, "Time must be in HH:MM format (24-hour clock)"),
 ])
 def test_create_activity_invalid_data(client, trip, changes, message):
-    response = client.post(f"/api/trips/{trip['id']}/activities", json=activity_data(**changes))
+    response = client.post(
+        f"/api/trips/{trip['id']}/activities",
+        json=activity_data(**changes),
+    )
     assert response.status_code == 400
     assert response.get_json() == {"error": message}
+
+
 
 
 def test_activity_allowed_on_first_and_last_trip_day(client, trip):
