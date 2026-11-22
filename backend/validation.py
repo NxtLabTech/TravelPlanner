@@ -1,4 +1,5 @@
 import math
+import re
 from datetime import datetime
 
 # Each validate_* function returns (cleaned_values, error_message).
@@ -93,11 +94,9 @@ def validate_activity(data, trip):
         return None, "Activity date must be within the trip dates"
 
     time = clean_text(data, "time")
-    if time:
-        try:
-            time = datetime.strptime(time, "%H:%M").strftime("%H:%M")
-        except ValueError:
-            return None, "Time must be in HH:MM format"
+
+    if time and not is_valid_time(time):
+        return None, "Time must be in HH:MM format (24-hour clock)"
 
     activity = {
         "title": title,
@@ -107,3 +106,11 @@ def validate_activity(data, trip):
         "notes": clean_text(data, "notes"),
     }
     return activity, None
+def is_valid_time(value):
+    if not isinstance(value, str):
+        return False
+
+    return re.fullmatch(
+        r"([01]\d|2[0-3]):[0-5]\d",
+        value
+    ) is not None
