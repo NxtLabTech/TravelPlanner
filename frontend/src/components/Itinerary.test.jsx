@@ -33,4 +33,15 @@ describe("Itinerary", () => {
     expect(onEdit).toHaveBeenCalledWith(activities[0]);
     expect(onDelete).toHaveBeenCalledWith(activities[1]);
   });
+
+  it("shows 'Deleting...' and disables Edit and Delete for the deleting activity", () => {
+    render(<Itinerary activities={activities} onEdit={vi.fn()} onDelete={vi.fn()} deletingActivityId={1} />);
+
+    const editButtons = screen.getAllByRole("button", { name: "Edit" });
+    expect(editButtons[0]).toBeDisabled();
+    expect(editButtons[1]).toBeEnabled();
+
+    expect(screen.getByRole("button", { name: "Deleting..." })).toBeDisabled();
+    expect(screen.getAllByRole("button", { name: "Delete" })).toHaveLength(2);
+  });
 });
