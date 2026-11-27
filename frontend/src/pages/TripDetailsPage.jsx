@@ -11,6 +11,7 @@ import {
 import { formatBudget, formatDate } from "../format.js";
 import StatusBadge from "../components/StatusBadge.jsx";
 import ActivityForm from "../components/ActivityForm.jsx";
+import ConfirmModal from "../components/ConfirmModal.jsx";
 import Itinerary from "../components/Itinerary.jsx";
 
 export default function TripDetailsPage() {
@@ -21,6 +22,7 @@ export default function TripDetailsPage() {
   const [error, setError] = useState("");
   // null = form hidden, {} = adding a new activity, otherwise the activity being edited
   const [formActivity, setFormActivity] = useState(null);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     Promise.all([getTrip(id), getActivities(id)])
@@ -97,11 +99,29 @@ export default function TripDetailsPage() {
             Edit trip
           </Link>
           <button
-            onClick={handleDeleteTrip}
+            onClick={() => setShowConfirm(true)}
             className="rounded border border-red-300 px-4 py-2 text-sm text-red-700"
           >
             Delete trip
           </button>
+          {/* Confirmation Modal */}
+          <ConfirmModal
+            open={showConfirm}
+            title="Delete trip"
+            message={`Are you sure you want to delete "${trip?.name}"? All activities associated with this trip will also be deleted.`}
+            onCancel={() => setShowConfirm(false)}
+            onConfirm={async () => {
+              setError("");
+              try {
+                await deleteTrip(id);
+                navigate("/");
+              } catch (err) {
+                setError(err.message);
+              } finally {
+                setShowConfirm(false);
+              }
+            }}
+          />
         </div>
       </div>
 
