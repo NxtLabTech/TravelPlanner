@@ -1,4 +1,5 @@
 import math
+import re
 from datetime import datetime
 
 # Each validate_* function returns (cleaned_values, error_message).
@@ -7,6 +8,7 @@ from datetime import datetime
 
 MAX_ID = 2**63 - 1  # largest integer SQLite can store
 MAX_BUDGET = 10**12
+TIME_PATTERN = re.compile(r"(?:[01][0-9]|2[0-3]):[0-5][0-9]")
 
 
 def parse_id(value):
@@ -92,11 +94,14 @@ def validate_activity(data, trip):
     if not parse_date(trip["start_date"]) <= activity_date <= parse_date(trip["end_date"]):
         return None, "Activity date must be within the trip dates"
 
-    time = clean_text(data, "time")
-    if time:
-        try:
-            time = datetime.strptime(time, "%H:%M").strftime("%H:%M")
-        except ValueError:
+    raw_time = data.get("time")
+    if raw_time is None:
+        time = ""
+    elif not isinstance(raw_time, str):
+        return None, "Time must be in HH:MM format"
+    else:
+        time = raw_time.strip()
+        if time and not TIME_PATTERN.fullmatch(time):
             return None, "Time must be in HH:MM format"
 
     activity = {
